@@ -1,0 +1,25 @@
+td.period{
+}
+table{
+margin:0px;
+padding:0px;
+border-collapse: collapse;
+}
+td {
+	padding-left:3px;
+}
+tr.day{
+	background:lightgrey;
+	margin:-1px;
+	padding:-1px;
+}
+
+td.day1{
+	font-weight:bold;
+	background: #a0a0a0;
+	padding-right: 6px;	
+}
+
+td.day{
+	
+}

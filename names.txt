@@ -1,0 +1,4 @@
+Prevessin,http://france.meteofrance.com/,france/meteo?PREVISIONS_PORTLET.path=previsionsville/013130,meteo_prevessin.html,
+Geneva,http://monde.meteofrance.com/,monde/previsions?MONDE_PORTLET.path=previsionsvilleMonde/06700,meteo_geneva.html,
+Montpellier,http://france.meteofrance.com/,france/meteo?PREVISIONS_PORTLET.path=previsionsville/341720,meteo_montpellier.html,
+Jakarta,http://monde.meteofrance.com/,monde/previsions?MONDE_PORTLET.path=previsionsvilleMonde/96747,meteo_jakarta.html,
