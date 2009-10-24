@@ -10,6 +10,21 @@ import string
 from datetime import datetime, date, time
 
 ###########
+
+#constants 
+base_dir = "./"
+namesFile = "./names.txt"
+# header is optimized for iphone
+head = """
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+	<meta name="viewport" content="width=350, user-scalable=yes">
+	<link rel="stylesheet" href="weather.css" type="text/css" />
+"""
+	
+timeFormat = "%A %d %B %Y - %H:%M:%S " 
+
+
+###########
 def parseAndDisplay(period,line,fi,domain):
 
 	weather = line.contents[2]
@@ -63,21 +78,6 @@ def parseAndDisplay(period,line,fi,domain):
 	fi.write((u''+RTD+ windM).encode('iso-8859-1'))
 	fi.write("</td></tr>\n")
 
-	
-###########
-
-#constants 
-#domain = "http://france.meteofrance.com/"
-base_dir = "./"
-namesFile = "./names.txt"
-head = """
-	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-	<meta name="viewport" content="width=350, user-scalable=yes">
-	<link rel="stylesheet" href="weather.css" type="text/css" />
-"""
-	
-timeFormat = "%A %d %B %Y - %H:%M:%S " 
-
 
 ###########
 def getAndParse(name,domain,suffix,file):
@@ -85,13 +85,7 @@ def getAndParse(name,domain,suffix,file):
 	streamWriter = codecs.lookup('iso-8859-1')[-1]
 	sys.stdout = streamWriter(sys.stdout)
 	
-	content=""
-	
-	#lines = open("meteo.html",'r').readlines()
-	#for line in lines:
-	#	content +=line.decode('iso-8859-1')
-	#f = open("meteo.html",'w')
-	
+	content=""	
 	content = urllib2.urlopen(domain + suffix)
 	
 	links = SoupStrainer('table')
@@ -104,14 +98,11 @@ def getAndParse(name,domain,suffix,file):
 	indent="    "
 	indent2=indent+indent
 	
-	#cityName = u"PR&Eacute;VESSIN MO\xCBNS".encode('utf-8')
-	cityName= name#"PR&Eacute;VESSIN MOENS"#"PR&Eacute;VESSIN MO\xCBNS"
+	cityName= name
 	pageName = u"<title>M&eacute;t&eacute;o for "+cityName+"</title>".encode('utf-8')
 	
 	title = "<html><head>"+head+pageName+"</head><body>"
-	
 	title +=u"<h1>M&eacute;t&eacute;o for "+cityName+"</h1>".encode('utf-8')
-	
 	title +="<h3>Today is "+datetime.now().strftime(timeFormat)+"</h3>"
 	
 	fi.write(title)
@@ -150,26 +141,28 @@ def getAndParse(name,domain,suffix,file):
 		parseAndDisplay(period,line,fi,domain)
 	
 	fi.write("</table></body></html>")
-
 	fi.close()
-
-
 
 def printIndex(infos):
 	
 	f = open(base_dir+"index.html",'w')
-	f.write("""
+	f.write("""<html>
 	<!doctype html><head><title>Meteo parsed from the meteofrance sites</title>
-	</head><body><ul>
-	""")
+	<link rel="stylesheet" href="weather.css" type="text/css" />
+	</head>
+	<body>
+	  <table>
+	  <thead><tr><th>Simple page</th><th>Original</th></tr></thead>
+""")
 	
 	for name,dico in infos.iteritems():
-		f.write("<li><a href=\""+dico["file"]+"\">"+name+"</a>")
-		f.write(" or on the <a href=\""+dico["domain"]+dico["suffix"]+"\">meteofrance site</a></li>\n")
+		f.write("<tr>\n<td><a href=\""+dico["file"]+"\">"+name+"</a></td>\n")
+		f.write("<td><a href=\""+dico["domain"]+dico["suffix"]+"\">meteofrance for "+name+"</a></td></tr>\n")
 			
-	f.write("</ul><body></html>")
+	f.write("		</table>\n	<body>\n</html>")
 	f.close()
-	
+
+####################
 def main():
 	import time
 	#get the files informations
@@ -198,7 +191,7 @@ def main():
 			print e.args      # arguments stored in .args
 			print e     
 			
-			
+		print "## " + datetime.now().strftime(timeFormat) + " # Sleeping for an hour."
 		time.sleep(3600)
 		
 		
