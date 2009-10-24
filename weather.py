@@ -11,10 +11,11 @@ from datetime import datetime, date, time
 
 ###########
 
-#constants 
+#constants
 base_dir = "./"
 namesFile = "./names.txt"
-# header is optimized for iphone
+sourceName = "the Meteo-France website"
+# header is geared toward iphone
 head = """
 	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 	<meta name="viewport" content="width=350, user-scalable=yes">
@@ -60,11 +61,11 @@ def parseAndDisplay(period,line,fi,domain):
 		
 	#http://france.meteofrance.com/meteo/pictos/web/SITE/16/sud-sud-ouest.gif
 	#http://france.meteofrance.com/meteo/pictos/web/SITE/30/32_c.gif
-	TD='</td><td class="'+classLine+'">'
-	RTD='</td><td class="'+classLine+'" align="right">'
+	TD='</td>\n\t<td class="'+classLine+'">'
+	RTD='</td>\n\t<td class="'+classLine+'" align="right">'
 	
 	weatherImg = weatherImg.replace("CARTE/40","SITE/30")
-	fi.write('<tr class="'+classLine+'">')
+	fi.write('<tr class="'+classLine+'">\n\t')
 	fi.write('<td class="'+classLine+'1">')
 	fi.write((u''+period).encode('iso-8859-1'))
 	fi.write(TD+'<img src="'+domain+weatherImg+'"')
@@ -76,7 +77,7 @@ def parseAndDisplay(period,line,fi,domain):
 	fi.write(TD+'<img src="'+domain+windImg+'" alt="'+windDir+'"title="'+windDir+'" />')
 	fi.write((u''+RTD+ windSpeed).encode('iso-8859-1'))
 	fi.write((u''+RTD+ windM).encode('iso-8859-1'))
-	fi.write("</td></tr>\n")
+	fi.write("</td>\n</tr>\n")
 
 
 ###########
@@ -104,8 +105,9 @@ def getAndParse(name,domain,suffix,file):
 	title = "<html><head>"+head+pageName+"</head><body>"
 	title +=u"<h1>M&eacute;t&eacute;o for "+cityName+"</h1>".encode('utf-8')
 	title +="<h3>Today is "+datetime.now().strftime(timeFormat)+"</h3>"
-	
+	source = getSourceSentence(domain+suffix,sourceName)
 	fi.write(title)
+	fi.write(source)
 	fi.write("<table>")
 
 	for line in soup("tr"):
@@ -143,6 +145,12 @@ def getAndParse(name,domain,suffix,file):
 	fi.write("</table></body></html>")
 	fi.close()
 
+
+def getSourceSentence(sourceUrl,sourceName):
+	return "The informations on this page come from <a href=\""+sourceUrl+"\">"+sourceName+"</a>.<br/><br/>"
+
+
+
 def printIndex(infos):
 	
 	f = open(base_dir+"index.html",'w')
@@ -150,7 +158,7 @@ def printIndex(infos):
 	<!doctype html><head><title>Meteo parsed from the meteofrance sites</title>
 	<link rel="stylesheet" href="weather.css" type="text/css" />
 	</head>
-	<body>
+	<body>Meteo parsed from <a href="http://www.meteofrance.com/">"""+sourceName+"""</a><br/>
 	  <table>
 	  <thead><tr><th>Simple page</th><th>Original</th></tr></thead>
 """)
