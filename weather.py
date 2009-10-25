@@ -14,6 +14,7 @@ from datetime import datetime, date, time
 #constants
 base_dir = "./"
 namesFile = "./names.txt"
+listFile = "index.html"
 sourceName = "the Meteo-France website"
 # header is geared toward iphone
 head = """
@@ -153,21 +154,18 @@ def getSourceSentence(sourceUrl,sourceName):
 
 def printIndex(infos):
 	
-	f = open(base_dir+"index.html",'w')
-	f.write("""<html>
-	<!doctype html><head><title>Meteo parsed from the meteofrance sites</title>
-	<link rel="stylesheet" href="weather.css" type="text/css" />
-	</head>
-	<body>Meteo parsed from <a href="http://www.meteofrance.com/">"""+sourceName+"""</a><br/>
-	  <table>
-	  <thead><tr><th>Simple page</th><th>Original</th></tr></thead>
-""")
-	
+	f = open(base_dir+listFile,'w')
+	f.write("<html>\n<head>")
+	f.write("\t<title>Meteo parsed from the meteofrance sites</title>")
+	f.write(head)
+	f.write("</head>\n<body>Meteo parsed from <a href=\"http://www.meteofrance.com/\">"+sourceName+"</a><br/>\n")
+	f.write("<table>\n<thead><tr><th>Simple page</th><th>Original</th></tr></thead>\n")
+
 	for name,dico in infos.iteritems():
-		f.write("<tr>\n<td><a href=\""+dico["file"]+"\">"+name+"</a></td>\n")
-		f.write("<td><a href=\""+dico["domain"]+dico["suffix"]+"\">meteofrance for "+name+"</a></td></tr>\n")
+		f.write("<tr>\n\t<td><a href=\""+dico["file"]+"\">"+name+"</a></td>\n")
+		f.write("\t<td><a href=\""+dico["domain"]+dico["suffix"]+"\">meteofrance for "+name+"</a></td>\n</tr>\n")
 			
-	f.write("		</table>\n	<body>\n</html>")
+	f.write("</table>\n<body>\n</html>")
 	f.close()
 
 ####################
