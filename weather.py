@@ -7,7 +7,6 @@ import codecs
 import sys
 import string
 
-from cStringIO import StringIO
 from datetime import datetime, date, time
 
 ###########
@@ -18,7 +17,7 @@ namesFile = "./names.txt"
 listFile = "index.html"
 sourceName = "the Meteo-France website"
 # header is geared toward iphone
-head = """
+head = u"""
 	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 	<meta name="viewport" content="width=350, user-scalable=yes">
 	<link rel="stylesheet" href="weather.css" type="text/css" />
@@ -28,8 +27,8 @@ timeFormat = "%A %d %B %Y - %H:%M:%S "
 
 
 ###########
-def parseAndDisplay(period,line,fi,domain):
-
+def parseAndDisplay(period,line,domain):
+	list=[u'']
 	weather = line.contents[2]
 	###########################
 	temperatures = weather.contents[1]
@@ -45,16 +44,16 @@ def parseAndDisplay(period,line,fi,domain):
 	rafales = line.contents[4]
 	windMax=rafales.contents[0]
 	###########################	
-	weatherName	= string.strip(weatherName)
-	weatherImg = string.strip(weatherImg)
+	weatherName	= unicode.strip(weatherName)
+	weatherImg = unicode.strip(weatherImg)
 	
-	windD = string.strip(windDir)
-	windI = string.strip(windImg)
-	windS = string.strip(windSpeed)[3:]
-	windM = string.strip(windMax)
+	windD = unicode.strip(windDir)
+	windI = unicode.strip(windImg)
+	windS = unicode.strip(windSpeed)[3:]
+	windM = unicode.strip(windMax)
 
 	temp = temperatures
-	temp = string.strip(temp)
+	temp = unicode.strip(temp)
 
 	classLine="period"
 	if temp.find("/")>0 :
@@ -65,37 +64,40 @@ def parseAndDisplay(period,line,fi,domain):
 	# I prefer smaller icons
 	weatherImg = weatherImg.replace("CARTE/40","SITE/30")
 	
-	TD='</td>\n\t<td class="'+classLine+'">'
-	RTD='</td>\n\t<td class="'+classLine+'" align="right">'
+	TD=u'</td>\n\t<td class="'+classLine+'">'
+	RTD=u'</td>\n\t<td class="'+classLine+'" align="right">'
 	
-	fi.write('<tr class="'+classLine+'">\n\t')
-	fi.write('<td class="'+classLine+'1">')
-	fi.write((u''+period).encode('iso-8859-1'))
-	fi.write(TD+'<img src="'+domain+weatherImg+'"')
-	fi.write((u'" alt="'+weatherName+'"').encode('iso-8859-1'))
-	fi.write((u'" title="'+weatherName+'"').encode('iso-8859-1'))
-	fi.write(' />')
-	
-	fi.write((u''+RTD + temp).encode('iso-8859-1'))
-	fi.write(TD+'<img src="'+domain+windImg+'" alt="'+windDir+'"title="'+windDir+'" />')
-	fi.write((u''+RTD+ windSpeed).encode('iso-8859-1'))
-	fi.write((u''+RTD+ windM).encode('iso-8859-1'))
-	fi.write("</td>\n</tr>\n")
+	list.append(u'<tr class="'+classLine+'">\n\t')
+	list.append(u'<td class="'+classLine+'1">')
+	list.append(period)
+	list.append(TD+'<img src="'+domain+weatherImg+'"')
+	list.append(u" alt=")
+	list.append(weatherName)
+	list.append(u'" title="')
+	list.append(weatherName)
+	list.append(u'" />' + RTD )
+	list.append(temp)
+	list.append(TD+'<img src="'+domain+windImg+'" alt="')
+	list.append(windDir)
+	list.append(u'"title="')
+	list.append(windDir)
+	list.append(u'" />'+RTD)
+	list.append(windSpeed)
+	list.append(RTD)
+	list.append(windM)
+	list.append(u"</td>\n</tr>\n")
+	return list
 
 
 ###########
 def getAndParse(name,domain,suffix,file):
 	
-	streamWriter = codecs.lookup('iso-8859-1')[-1]
-	sys.stdout = streamWriter(sys.stdout)
-	
+	list = [u'']
 	content=""	
 	content = urllib2.urlopen(domain + suffix)
-	
+
 	links = SoupStrainer('table')
 	soup= BeautifulSoup(content, parseOnlyThese=links)
-
-	fi = StringIO()
 
 	s=""
 	n=-1
@@ -106,13 +108,13 @@ def getAndParse(name,domain,suffix,file):
 	cityName= name
 	pageName = u"<title>M&eacute;t&eacute;o for "+cityName+"</title>".encode('utf-8')
 	
-	title = "<html><head>"+head+pageName+"</head><body>"
+	title = u"<html><head>"+head+pageName+"</head><body>"
 	title +=u"<h1>M&eacute;t&eacute;o for "+cityName+"</h1>".encode('utf-8')
-	title +="<h3>Today is "+datetime.now().strftime(timeFormat)+"</h3>"
+	title +=u"<h3>Today is "+datetime.now().strftime(timeFormat)+"</h3>"
 	source = getSourceSentence(domain+suffix,sourceName)
-	fi.write(title)
-	fi.write(source)
-	fi.write("<table>")
+	list.append(title)
+	list.append(source)
+	list.append(u"<table>")
 
 	for line in soup("tr"):
 		period=""
@@ -126,7 +128,7 @@ def getAndParse(name,domain,suffix,file):
 			if n>=0:
 				if day!=s[:n] :
 					day=s[:n]
-					#f.write("=====",day
+					#list.append("=====",day
 			else:#summary of that day or empty line?
 				sDay=s
 				weather = line.contents[2]
@@ -134,7 +136,9 @@ def getAndParse(name,domain,suffix,file):
 					#for the first line
 					continue
 			
-				parseAndDisplay("# "+sDay,line,fi,domain)		
+				periodLine = parseAndDisplay("# "+sDay,line,domain)
+				list.extend(periodLine)
+				#repr(list)
 				continue
 		###########################
 		## morning, afternoon etc ...
@@ -144,33 +148,37 @@ def getAndParse(name,domain,suffix,file):
 		period=period.contents[0]
 		############################
 		## render
-		parseAndDisplay(period,line,fi,domain)
+		periodLine = parseAndDisplay(period,line,domain)
+		list.extend(periodLine)
+
 	
-	fi.write("</table></body></html>")
+	list.append(u"</table></body></html>")
 	fileOut = open(base_dir+file,'w')
-	fileOut.write(fi.getvalue())
+	outText = u''.join(list)
+	text = outText.encode("iso-8859-1")
+	fileOut.write(text)
 	fileOut.close()
 
 
 def getSourceSentence(sourceUrl,sourceName):
-	return "The informations on this page come from <a href=\""+sourceUrl+"\">"+sourceName+"</a>.<br/><br/>"
+	return u"The informations on this page come from <a href=\""+sourceUrl+"\">"+sourceName+"</a>.<br/><br/>"
 
 
 
 def generateHtmlIndex(infos):
-	f=StringIO()
-	f.write("<html>\n<head>")
-	f.write("\t<title>Meteo parsed from the meteofrance sites</title>")
-	f.write(head)
-	f.write("</head>\n<body>Meteo parsed from <a href=\"http://www.meteofrance.com/\">"+sourceName+"</a><br/>\n")
-	f.write("<table>\n<thead><tr><th>Simple page</th><th>Original</th></tr></thead>\n")
+	list=[]
+	list.append(u"<html>\n<head>")
+	list.append(u"\t<title>Meteo parsed from the meteofrance sites</title>")
+	list.append(head)
+	list.append(u"</head>\n<body>Meteo parsed from <a href=\"http://www.meteofrance.com/\">"+sourceName+"</a><br/>\n")
+	list.append(u"<table>\n<thead><tr><th>Simple page</th><th>Original</th></tr></thead>\n")
 
 	for name,dico in infos.iteritems():
-		f.write("<tr>\n\t<td><a href=\""+dico["file"]+"\">"+name+"</a></td>\n")
-		f.write("\t<td><a href=\""+dico["domain"]+dico["suffix"]+"\">meteofrance for "+name+"</a></td>\n</tr>\n")
+		list.append(u"<tr>\n\t<td><a href=\""+dico["file"]+"\">"+name+"</a></td>\n")
+		list.append(u"\t<td><a href=\""+dico["domain"]+dico["suffix"]+"\">meteofrance for "+name+"</a></td>\n</tr>\n")
 			
-	f.write("</table>\n<body>\n</html>")
-	return f.getvalue()	
+	list.append(u"</table>\n<body>\n</html>")
+	return list
 
 ####################
 def main():
@@ -196,22 +204,22 @@ def main():
 		print "Darn, asking for a nil or non existing page. Parsing all the pages every hours"
 
 
-	index = generateHtmlIndex(infos)
+	indexStrings = generateHtmlIndex(infos)
 	fileOut = open(base_dir+listFile,'w')
-	fileOut.write(index)
+	fileOut.write(''.join(indexStrings))
 	fileOut.close()
 
 	while 1:
 		try:
 			for name,dico in infos.iteritems():
 				getAndParse(dico["name"],dico["domain"],dico["suffix"],dico["file"])
-				print "did parse ",name			
+				print "did parse ",name
 				
 		except Exception as e:
 			print "Error while trying to parse/write the webpage : "
 			print type(e)     # the exception instance
 			print e.args      # arguments stored in .args
-			print e     
+			print e
 			
 		print "## " + datetime.now().strftime(timeFormat) + " # Sleeping for an hour."
 		time.sleep(3600)
