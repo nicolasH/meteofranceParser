@@ -16,11 +16,12 @@ base_dir = "./"
 namesFile = "./names.txt"
 listFile = "index.html"
 sourceName = "the Meteo-France website"
+
 # header is geared toward iphone
 head = u"""
 	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 	<meta name="viewport" content="width=350, user-scalable=yes">
-	<link rel="stylesheet" href="weather.css" type="text/css" />
+	<link rel="stylesheet" href="css/weather.css" type="text/css" />
 """
 	
 timeFormat = "%A %d %B %Y - %H:%M:%S " 
@@ -90,11 +91,11 @@ def parseAndDisplay(period,line,domain):
 
 
 ###########
-def getAndParse(name,domain,suffix,file):
-	
+def parseMeteoPage(dico,content):
+	name = dico["name"]
+	domain = dico["domain"]
+	suffix = dico["suffix"]	
 	list = [u'']
-	content=""	
-	content = urllib2.urlopen(domain + suffix)
 
 	links = SoupStrainer('table')
 	soup= BeautifulSoup(content, parseOnlyThese=links)
@@ -153,19 +154,14 @@ def getAndParse(name,domain,suffix,file):
 
 	
 	list.append(u"</table></body></html>")
-	fileOut = open(base_dir+file,'w')
-	outText = u''.join(list)
-	text = outText.encode("iso-8859-1")
-	fileOut.write(text)
-	fileOut.close()
-
+	return list
 
 def getSourceSentence(sourceUrl,sourceName):
 	return u"The informations on this page come from <a href=\""+sourceUrl+"\">"+sourceName+"</a>.<br/><br/>"
 
 
 
-def generateHtmlIndex(infos):
+def generateIndex(infos,pagesAreFiles):
 	list=[]
 	list.append(u"<html>\n<head>")
 	list.append(u"\t<title>Meteo parsed from the meteofrance sites</title>")
@@ -174,48 +170,69 @@ def generateHtmlIndex(infos):
 	list.append(u"<table>\n<thead><tr><th>Simple page</th><th>Original</th></tr></thead>\n")
 
 	for name,dico in infos.iteritems():
-		list.append(u"<tr>\n\t<td><a href=\""+dico["file"]+"\">"+name+"</a></td>\n")
+		pageAddress = name
+		if pagesAreFiles :
+			pageAddress=dico["file"]
+
+		list.append(u"<tr>\n\t<td><a href=\""+pageAddress+"\">"+name+"</a></td>\n")
 		list.append(u"\t<td><a href=\""+dico["domain"]+dico["suffix"]+"\">meteofrance for "+name+"</a></td>\n</tr>\n")
 			
 	list.append(u"</table>\n<body>\n</html>")
 	return list
 
 ####################
-def main():
-	import time
-	#get the files informations
+def getInfos():
 	infos = {}
-	with open(namesFile) as f:
-	    for line in f:
-	    	l = line.split(',')
-	    	infos[l[0]] = {"name":l[0],"domain":l[1],"suffix":l[2],"file":l[3]}
+	f = open(namesFile)
+	for line in f:
+		l = line.split(',')
+		infos[l[0]] = {"name":l[0],"domain":l[1],"suffix":l[2],"file":l[3]}
 	    	#print "name : ",l[0]
 	    	#print "domain: ",l[1]
 	    	#print "suffix : ",l[2]
 	    	#print "fileOut:,",l[3]	
-	    	
+	return infos
+
+def writeFile(fileName,contentList):
+	fileOut = open(base_dir+fileName,'w')
+	outText = u''.join(contentList)
+	text = outText.encode("iso-8859-1")
+	fileOut.write(text)
+	fileOut.close()
+	
+def main():
+	import time
+	#get the files informations
+	infos = getInfos()
+	
 	if len(sys.argv)>1 and sys.argv[1] in infos:
 		page = sys.argv[1]
 		dico = infos[page]
-		getAndParse(dico["name"],dico["domain"],dico["suffix"],dico["file"])
-		print "did parse ",page	
+
+		content = urllib2.urlopen(dico["domain"]+dico["suffix"])
+
+		list = parseMeteoPage(dico,content)
+		writeFile(dico["file"],list)
+		print "did parse one of one page :",page	
 		return
 	else:
 		print "Darn, asking for a nil or non existing page. Parsing all the pages every hours"
 
-
-	indexStrings = generateHtmlIndex(infos)
-	fileOut = open(base_dir+listFile,'w')
-	fileOut.write(''.join(indexStrings))
-	fileOut.close()
+	indexStrings = generateIndex(infos,True)
+	writeFile(listFile,indexStrings)
 
 	while 1:
 		try:
 			for name,dico in infos.iteritems():
-				getAndParse(dico["name"],dico["domain"],dico["suffix"],dico["file"])
-				print "did parse ",name
+
+				content = urllib2.urlopen(dico["domain"]+dico["suffix"])
+
+				list = parseMeteoPage(dico,content)
+
+				writeFile(dico["file"],list)
+				print "did parse one of many page : ",name
 				
-		except Exception as e:
+		except Exception, e:
 			print "Error while trying to parse/write the webpage : "
 			print type(e)     # the exception instance
 			print e.args      # arguments stored in .args
