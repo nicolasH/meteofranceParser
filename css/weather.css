@@ -1,26 +1,42 @@
+/* @override http://localhost:8080/css/weather.css */
 
-body{
-	margin:-0px;
+body {
+	margin: -0px;
 	padding: -0px;
+	font-family: "Helvetica Neue", Arial, Helvetica, Geneva, sans-serif;
+	font-size: 0.8em;
 }
-.content{
-	width:320px;
+
+h1 {
+	font-size: 1.4em;
+	font-style: bold;
+}
+
+h3 {
+	font-size: 1.1em;
+	font-weight: normal;
+	font-style: italic;
+}
+
+.content {
+	width: 320px;
 	background: white;
-	padding: 2ex 4ex;
+	padding: 1ex;
 	margin: 0 auto;
 	width: 320px;
 }
-table{
-	/*margin: 0, auto;*/
-	
+
+table {
+	font-size: 1em;	
 	border-collapse: collapse;
 	border: solid 1px black;
 	width: 100%;
 }
 
-th{/*Used for the index page*/
+th {
+	/*Used for the index page*/
 	text-align: left;
-	padding-right:30px;
+	padding-right: 30px;
 	padding-left: 5px;
 	padding-top: 5px;
 	padding-bottom: 5px;
@@ -28,29 +44,30 @@ th{/*Used for the index page*/
 }
 
 td {
-	padding-left:3px;
+	padding-left: 3px;
 }
 
-tr.day{
-	background:lightgrey;
-	margin:-1px;
-	padding:-1px;
+tr.day {
+	background: lightgrey;
+	margin: -1px;
+	padding: -1px;
 }
 
-td.day1{
-	font-weight:bold;
+td.day1 {
+	font-weight: bold;
 	background: #a0a0a0;
-	padding-right: 6px;	
+	padding-right: 6px;
 }
 
-td.period{
-
-}
-
-td.day{
+td.period {
 	
 }
-.source,.footer{
+
+td.day {
+	
+}
+
+.source,.footer {
 	width: 100%;
 	padding-top: 10px;
 	padding-bottom: 10px;

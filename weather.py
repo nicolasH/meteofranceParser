@@ -5,6 +5,7 @@ import re
 import urllib2
 import codecs
 import sys
+import copy
 import string
 
 from datetime import datetime, date, time
@@ -101,25 +102,35 @@ def parseMeteoPage(dico,content):
 	suffix = dico["suffix"]	
 	list = [u'']
 
-	links = SoupStrainer('table')
-	soup= BeautifulSoup(content, parseOnlyThese=links)
-
-	s=""
-	n=-1
 	day=""
 	indent="    "
 	indent2=indent+indent
-	
-	cityName= name
-	
-	pageName = u"M&eacute;t&eacute;o pour "+cityName+"".encode('utf-8')
-	
-	title = u"<html><head>"+head+"<title>"+pageName+"</title>\n</head>\n<body>\n<div class=\"content\">\n"
+
+	cityInfosFilter = SoupStrainer('div',{'class':'infos'})
+	otherSoup=BeautifulSoup(content,parseOnlyThese=cityInfosFilter)
+	infosPage = otherSoup("p",text=True)
+	#no post code on foreign cities
+	cityName = infosPage[0]
+	if len(infosPage) == 3 :
+		lastUpdate = infosPage[2]
+	else :
+		#cityPostcode = infosPage[1]
+		lastUpdate = infosPage[3]
+
+	links = SoupStrainer('table')
+	soup= BeautifulSoup(content, parseOnlyThese=links)
+
+	pageName = u"Pr&eacute;visions m&eacute;t&eacute;o pour "+cityName+" ".encode('utf-8')
+
+	title = u"<html>\n<head>"+head+"<title>"+pageName+"</title>\n</head>\n<body>\n<div class=\"content\">\n"
 	title +=u"<h1>"+pageName+"</h1>\n".encode('utf-8')
 	title +=u"<h3>R&eacute;cuper&eacute; le "+datetime.now().strftime(timeFormat)+"</h3>\n"
+
 	source = getSourceSentence(domain+suffix,cityName)
+
 	list.append(title)
 	list.append(source)
+	list.append(u"<h3>"+lastUpdate+"</h3>")
 	list.append(u"<table>")
 
 	for line in soup("tr"):
@@ -134,17 +145,14 @@ def parseMeteoPage(dico,content):
 			if n>=0:
 				if day!=s[:n] :
 					day=s[:n]
-					#list.append("=====",day
 			else:#summary of that day or empty line?
 				sDay=s
 				weather = line.contents[2]
 				if len(weather.contents)==0:
 					#for the first line
 					continue
-			
 				periodLine = parseAndDisplay("# "+sDay,line,domain)
 				list.extend(periodLine)
-				#repr(list)
 				continue
 		###########################
 		## morning, afternoon etc ...
@@ -156,13 +164,13 @@ def parseMeteoPage(dico,content):
 		## render
 		periodLine = parseAndDisplay(period,line,domain)
 		list.extend(periodLine)
-	
+
 	list.append(u"</table>\n"+foot+"\n<div></body>\n</html>")
 	return list
 
+
 def getSourceSentence(sourceUrl,pageName):
 	return u"<div class=\"source\">Les informations sur cette page proviennent de la page de pr&eacute;visions de <a href=\""+sourceUrl+"\">M&eacute;t&eacute;o-France pour "+pageName+"</a>.</div>\n"
-
 
 
 def generateIndex(infos,pagesAreFiles):
@@ -184,7 +192,7 @@ def generateIndex(infos,pagesAreFiles):
 	list.append(u"</table>\n"+foot+"\n</div>\n<body></html>")
 	return list
 
-####################
+
 def getInfos():
 	infos = {}
 	f = open(namesFile)
@@ -197,13 +205,20 @@ def getInfos():
 	    	#print "fileOut:,",l[3]	
 	return infos
 
+
+def getContent(dico):
+	resp = urllib2.urlopen(dico["domain"]+dico["suffix"])
+	return resp.read()
+
+
 def writeFile(fileName,contentList):
 	fileOut = open(base_dir+fileName,'w')
 	outText = u''.join(contentList)
 	text = outText.encode("iso-8859-1")
 	fileOut.write(text)
 	fileOut.close()
-	
+
+###############################
 def main():
 	import time
 	#get the files informations
@@ -213,8 +228,7 @@ def main():
 		page = sys.argv[1]
 		dico = infos[page]
 
-		content = urllib2.urlopen(dico["domain"]+dico["suffix"])
-
+		content= getContent(dico)
 		list = parseMeteoPage(dico,content)
 		writeFile(dico["file"],list)
 		print "did parse one of one page :",page	
@@ -224,18 +238,15 @@ def main():
 
 	indexStrings = generateIndex(infos,True)
 	writeFile(listFile,indexStrings)
-
+	i=0
 	while 1:
 		try:
 			for name,dico in infos.iteritems():
-
-				content = urllib2.urlopen(dico["domain"]+dico["suffix"])
-
+				content= getContent(dico)
 				list = parseMeteoPage(dico,content)
-
 				writeFile(dico["file"],list)
 				print "did parse one of many page : ",name
-				
+
 		except Exception, e:
 			print "Error while trying to parse/write the webpage : "
 			print type(e)     # the exception instance
