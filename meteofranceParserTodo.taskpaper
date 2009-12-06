@@ -1,6 +1,6 @@
 MeteoFrance parser:
 -> project is available as me-teo.appspot.com
-- Get the name and time from the meteofrance page.
+- Get the name and time from the meteofrance page. @done(2009-12-06)
 - Store the list of cities in a database/ datastore 
 	use a hash of the city name as key, so that a hash of the requested page will get the information about the page
 - Add a form to submit your own city page.
