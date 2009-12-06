@@ -15,7 +15,6 @@ from datetime import datetime, date, time
 base_dir = "./"
 namesFile = "./names.txt"
 listFile = "index.html"
-sourceName = "the Meteo-France website"
 
 # header is geared toward iphone
 head = u"""
@@ -23,8 +22,13 @@ head = u"""
 	<meta name="viewport" content="width=350, user-scalable=yes">
 	<link rel="stylesheet" href="css/weather.css" type="text/css" />
 """
-	
-timeFormat = "%A %d %B %Y - %H:%M:%S " 
+foot =u"""
+	<div class="footer">
+		Les pr&eacute;visions m&eacute;t&eacute;o sont extraites du site de M&eacute;t&eacute;o-France. Elles sont reproduites en accord avec les informations pr&eacute;sentes sur la page concernant les <a href="http://france.meteofrance.com/france/accueil/informations_publiques">informations publiques</a>.
+	</div>
+"""
+#timeFormat = "%A %d %B %Y - %H:%M:%S " 
+timeFormat = "%Y/%m/%d &agrave; %H:%M:%S " 
 
 
 ###########
@@ -107,12 +111,13 @@ def parseMeteoPage(dico,content):
 	indent2=indent+indent
 	
 	cityName= name
-	pageName = u"<title>M&eacute;t&eacute;o for "+cityName+"</title>".encode('utf-8')
 	
-	title = u"<html><head>"+head+pageName+"</head><body>"
-	title +=u"<h1>M&eacute;t&eacute;o for "+cityName+"</h1>".encode('utf-8')
-	title +=u"<h3>Today is "+datetime.now().strftime(timeFormat)+"</h3>"
-	source = getSourceSentence(domain+suffix,sourceName)
+	pageName = u"M&eacute;t&eacute;o pour "+cityName+"".encode('utf-8')
+	
+	title = u"<html><head>"+head+"<title>"+pageName+"</title>\n</head>\n<body>\n<div class=\"content\">\n"
+	title +=u"<h1>"+pageName+"</h1>\n".encode('utf-8')
+	title +=u"<h3>R&eacute;cuper&eacute; le "+datetime.now().strftime(timeFormat)+"</h3>\n"
+	source = getSourceSentence(domain+suffix,cityName)
 	list.append(title)
 	list.append(source)
 	list.append(u"<table>")
@@ -151,23 +156,22 @@ def parseMeteoPage(dico,content):
 		## render
 		periodLine = parseAndDisplay(period,line,domain)
 		list.extend(periodLine)
-
 	
-	list.append(u"</table></body></html>")
+	list.append(u"</table>\n"+foot+"\n<div></body>\n</html>")
 	return list
 
-def getSourceSentence(sourceUrl,sourceName):
-	return u"The informations on this page come from <a href=\""+sourceUrl+"\">"+sourceName+"</a>.<br/><br/>"
+def getSourceSentence(sourceUrl,pageName):
+	return u"<div class=\"source\">Les informations sur cette page proviennent de la page de pr&eacute;visions de <a href=\""+sourceUrl+"\">M&eacute;t&eacute;o-France pour "+pageName+"</a>.</div>\n"
 
 
 
 def generateIndex(infos,pagesAreFiles):
 	list=[]
 	list.append(u"<html>\n<head>")
-	list.append(u"\t<title>Meteo parsed from the meteofrance sites</title>")
+	list.append(u"\t<title>M&eacute;t&eacute;o extraite des sites de M&eacute;t&eacute;o-France</title>")
 	list.append(head)
-	list.append(u"</head>\n<body>Meteo parsed from <a href=\"http://www.meteofrance.com/\">"+sourceName+"</a><br/>\n")
-	list.append(u"<table>\n<thead><tr><th>Simple page</th><th>Original</th></tr></thead>\n")
+	list.append(u"</head>\n<body><div class=\"content\"><div class=\"source\">Source : <a href=\"http://www.meteofrance.com/\">M&eacute;t&eacute;o-France</a></div>\n")
+	list.append(u"<table>\n<thead><tr><th>Simple</th><th>Original</th></tr></thead>\n")
 
 	for name,dico in infos.iteritems():
 		pageAddress = name
@@ -175,9 +179,9 @@ def generateIndex(infos,pagesAreFiles):
 			pageAddress=dico["file"]
 
 		list.append(u"<tr>\n\t<td><a href=\""+pageAddress+"\">"+name+"</a></td>\n")
-		list.append(u"\t<td><a href=\""+dico["domain"]+dico["suffix"]+"\">meteofrance for "+name+"</a></td>\n</tr>\n")
+		list.append(u"\t<td><a href=\""+dico["domain"]+dico["suffix"]+"\">"+name+" chez M&eacute;t&eacute;o-France</a></td>\n</tr>\n")
 			
-	list.append(u"</table>\n<body>\n</html>")
+	list.append(u"</table>\n"+foot+"\n</div>\n<body></html>")
 	return list
 
 ####################
