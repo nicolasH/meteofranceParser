@@ -178,7 +178,7 @@ def generateIndex(infos,pagesAreFiles):
 	list.append(u"<html>\n<head>")
 	list.append(u"\t<title>M&eacute;t&eacute;o extraite des sites de M&eacute;t&eacute;o-France</title>")
 	list.append(head)
-	list.append(u"</head>\n<body><div class=\"content\"><div class=\"source\">Source : <a href=\"http://www.meteofrance.com/\">M&eacute;t&eacute;o-France</a></div>\n")
+	list.append(u"</head>\n<body><div class=\"content\"><p>Ce site web a &eacute;t&eacute; &eacute;crit pour pouvoir consulter les pr&eacute;visions de M&eacute;t&eacute;o-France sans crasher le navigateur web de l'iPhone.</p><div class=\"source\">Source des pr&eacute;visions : <a href=\"http://www.meteofrance.com/\">M&eacute;t&eacute;o-France</a></div>\n")
 	list.append(u"<table>\n<thead><tr><th>Simple</th><th>Original</th></tr></thead>\n")
 
 	for name,dico in infos.iteritems():

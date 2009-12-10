@@ -1,0 +1,16 @@
+cron:
+- description: regular update
+  url: /Prevessin
+  schedule: every 1 hours
+
+- description: regular update
+  url: /Geneva
+  schedule: every 2 hours
+
+- description: regular update
+  url: /Montpellier
+  schedule: every 2 hours
+
+- description: regular update
+  url: /Jakarta
+  schedule: every 2 hours

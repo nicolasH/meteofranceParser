@@ -5,7 +5,7 @@ MeteoFrance parser:
 	use a hash of the city name as key, so that a hash of the requested page will get the information about the page
 - Add a form to submit your own city page.
 - Store the data to have an history of the forecasts.
-- add caching to the project :
-	- fetch the meteofrance page and then cache it for an hour.
+- add caching to the project : @done(2009-12-10)
+	- fetch the meteofrance page and then cache it for an hour. @done(2009-12-10)
 
 - put the metofrance parser on google app engine as a test project @done(2009-12-06)
