@@ -29,7 +29,7 @@ class MainPage(webapp.RequestHandler):
 				list = weather.parseMeteoPage(dico,fullPage.content)
 				outText = u''.join(list)
 				text = outText.encode("iso-8859-1")
-				cityS = CityStore()
+				cityS = CityStore(key_name=page)
 				cityS.content = db.Text(text, encoding="utf-8")
 				cityS.cityKey = page
 				self.response.out.write(text)
