@@ -6,6 +6,21 @@ from datetime import datetime, date, time,timedelta
 
 import weather
 
+trackingScript = u"""
+<script type="text/javascript">
+
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-3650019-3']);
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(ga);
+  })();
+
+</script>"""
+
 class CityStore(db.Model):
 	cityKey = db.StringProperty()
 	content = db.TextProperty()
@@ -26,7 +41,7 @@ class MainPage(webapp.RequestHandler):
 					return
 				dico = infos[page]
 				fullPage = result = urlfetch.fetch(url=(dico["domain"]+dico["suffix"]))
-				list = weather.parseMeteoPage(dico,fullPage.content)
+				list = weather.parseMeteoPage(dico,fullPage.content,trackingScript)
 				outText = u''.join(list)
 				text = outText.encode("iso-8859-1")
 				cityS = CityStore(key_name=page)
@@ -36,7 +51,7 @@ class MainPage(webapp.RequestHandler):
 				cityS.put()
 				return
         
-        indexStrings= weather.generateIndex(infos,False)
+        indexStrings= weather.generateIndex(infos,False,trackingScript)
         self.response.out.write(u''.join(indexStrings))
         
 		

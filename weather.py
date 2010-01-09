@@ -76,14 +76,15 @@ def parseAndDisplay(period,line,domain):
 	list.append(u'<tr class="'+classLine+'">\n\t')
 	list.append(u'<td class="'+classLine+'1">')
 	list.append(period)
-	list.append(TD+'<img src="'+domain+weatherImg+'"')
-	list.append(u" alt=")
+	list.append(TD+'<img src="'+domain+weatherImg+'" width="30" height="30" ')
+	list.append(u' alt="')
 	list.append(weatherName)
 	list.append(u'" title="')
 	list.append(weatherName)
 	list.append(u'" />' + RTD )
 	list.append(temp)
-	list.append(TD+'<img src="'+domain+windImg+'" alt="')
+	list.append(TD + u'<img src="'+domain+windImg+'"')
+	list.append(u' width="16" height="16" alt="')
 	list.append(windDir)
 	list.append(u'"title="')
 	list.append(windDir)
@@ -96,7 +97,7 @@ def parseAndDisplay(period,line,domain):
 
 
 ###########
-def parseMeteoPage(dico,content):
+def parseMeteoPage(dico,content,tracking=""):
 	name = dico["name"]
 	domain = dico["domain"]
 	suffix = dico["suffix"]	
@@ -164,8 +165,11 @@ def parseMeteoPage(dico,content):
 		## render
 		periodLine = parseAndDisplay(period,line,domain)
 		list.extend(periodLine)
-
-	list.append(u"</table>\n"+foot+"\n<div></body>\n</html>")
+	
+	list.append(u"</table>\n"+foot+"\n<div>\n")
+	list.append(u"<div clas=\"nav\">Retourner &agrave <a href=\"/\">la list des villes</a></div>\n")
+	list.append(tracking)
+	list.append("</body>\n</html>")
 	return list
 
 
@@ -173,7 +177,7 @@ def getSourceSentence(sourceUrl,pageName):
 	return u"<div class=\"source\">Les informations sur cette page proviennent de la page de pr&eacute;visions de <a href=\""+sourceUrl+"\">M&eacute;t&eacute;o-France pour "+pageName+"</a>.</div>\n"
 
 
-def generateIndex(infos,pagesAreFiles):
+def generateIndex(infos,pagesAreFiles,tracking=""):
 	list=[]
 	list.append(u"<html>\n<head>")
 	list.append(u"\t<title>M&eacute;t&eacute;o extraite des sites de M&eacute;t&eacute;o-France</title>")
@@ -189,7 +193,7 @@ def generateIndex(infos,pagesAreFiles):
 		list.append(u"<tr>\n\t<td><a href=\""+pageAddress+"\">"+name+"</a></td>\n")
 		list.append(u"\t<td><a href=\""+dico["domain"]+dico["suffix"]+"\">"+name+" chez M&eacute;t&eacute;o-France</a></td>\n</tr>\n")
 			
-	list.append(u"</table>\n"+foot+"\n</div>\n<body></html>")
+	list.append(u"</table>\n"+foot+"\n</div>\n"+tracking+"\n<body></html>")
 	return list
 
 
