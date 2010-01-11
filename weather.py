@@ -17,6 +17,7 @@ base_dir = "./"
 namesFile = "./names.txt"
 listFile = "index.html"
 
+imgDomainMobile = "http://mobile.meteofrance.com/"
 # header is geared toward iphone
 head = u"""
 	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
@@ -76,14 +77,14 @@ def parseAndDisplay(period,line,domain):
 	list.append(u'<tr class="'+classLine+'">\n\t')
 	list.append(u'<td class="'+classLine+'1">')
 	list.append(period)
-	list.append(TD+'<img src="'+domain+weatherImg+'" width="30" height="30" ')
+	list.append(TD+'<img src="'+imgDomainMobile+weatherImg+'" width="30" height="30" ')
 	list.append(u' alt="')
 	list.append(weatherName)
 	list.append(u'" title="')
 	list.append(weatherName)
 	list.append(u'" />' + RTD )
 	list.append(temp)
-	list.append(TD + u'<img src="'+domain+windImg+'"')
+	list.append(TD + u'<img src="'+imgDomainMobile+windImg+'"')
 	list.append(u' width="16" height="16" alt="')
 	list.append(windDir)
 	list.append(u'"title="')

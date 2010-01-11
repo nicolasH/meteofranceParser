@@ -1,19 +1,21 @@
 MeteoFrance parser:
 -> project is available as me-teo.appspot.com
-- Get the name and time from the meteofrance page. @done(2009-12-06)
-- Store the list of cities in a database/ datastore  @done(2009-12-13)
-	use a hash of the city name as key, so that a hash of the requested page will get the information about the page. 
-	Using the name of the city as a key so that only one instance of the result page is stored.
 
-- Add an analytics tool. (added google analytics) @done(2010-01-10)
 - Look into replacing the icons from the page by opensource ones.
 - Add a form to submit your own city page.
 - Add navigation to the site.
 	- Add a swipe style to switch from a city to another. 
 	- Add a link back to the list of cities @done(2010-01-10)
 - Store the data to have an history of the forecasts.
-- Change the icons so that only the data is comming from meteofrance.
+
+Done Items
+- Change the pictures domain so that they are displayed on the iphone (change domain prefix to "mobile") @done(2010-01-11)
+- Get the name and time from the meteofrance page. @done(2009-12-06)
+- Store the list of cities in a database/ datastore  @done(2009-12-13)
+	use a hash of the city name as key, so that a hash of the requested page will get the information about the page. 
+	Using the name of the city as a key so that only one instance of the result page is stored.
+
+- Add an analytics tool. (added google analytics) @done(2010-01-10)
+- put the metofrance parser on google app engine as a test project @done(2009-12-06)
 - add caching to the project : @done(2009-12-10)
 	- fetch the meteofrance page and then cache it for an hour. @done(2009-12-10)
-
-- put the metofrance parser on google app engine as a test project @done(2009-12-06)
