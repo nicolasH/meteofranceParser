@@ -164,9 +164,6 @@ def parseMeteoPage(dico,content,tracking=""):
 		period=period.contents[0]
 		############################
 		## render
-		#print u"period : "+period 
-		#+ " line " + line
-		#+ " domain " + domain
 		periodLine = parseAndDisplay(period,line,domain)
 		list.extend(periodLine)
 	
