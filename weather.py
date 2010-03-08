@@ -119,7 +119,7 @@ def parseMeteoPage(dico,content,tracking=""):
 		#cityPostcode = infosPage[1]
 		lastUpdate = infosPage[3]
 
-	links = SoupStrainer('table')
+	links = SoupStrainer('table',{'class':'tableWeather'})
 	soup= BeautifulSoup(content, parseOnlyThese=links)
 
 	pageName = u"Pr&eacute;visions m&eacute;t&eacute;o pour "+cityName+" ".encode('utf-8')
@@ -164,6 +164,9 @@ def parseMeteoPage(dico,content,tracking=""):
 		period=period.contents[0]
 		############################
 		## render
+		#print u"period : "+period 
+		#+ " line " + line
+		#+ " domain " + domain
 		periodLine = parseAndDisplay(period,line,domain)
 		list.extend(periodLine)
 	
