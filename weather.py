@@ -185,7 +185,6 @@ def parseMeteoPageFrance(dico,content,tracking=""):
 
 	cityInfosFilter = SoupStrainer('div',{'class':'choix'})
 	otherSoup=BeautifulSoup(content,parseOnlyThese=cityInfosFilter)
-	print "content for france ???\n"
 	infosPage = otherSoup("p",text=True)
 	#no post code on foreign cities
 	cityName = infosPage[0]
@@ -196,7 +195,7 @@ def parseMeteoPageFrance(dico,content,tracking=""):
 		#cityPostcode = infosPage[1]
 		lastUpdate = infosPage[3]
 
-	links = SoupStrainer('table',{'class':'tableWeather'})
+	links = SoupStrainer('div',{'class':'bloc_details'})
 	soup= BeautifulSoup(content, parseOnlyThese=links)
 
 	pageName = u"Pr&eacute;visions m&eacute;t&eacute;o pour "+cityName+" ".encode('utf-8')
@@ -212,6 +211,17 @@ def parseMeteoPageFrance(dico,content,tracking=""):
 	list.append(u"<h3>"+lastUpdate+"</h3>")
 	list.append(u"<table>")
 
+	# current format in july-august / 2010
+	# summaries in divs
+	#				id -> jour0, jour1, jour2 
+	#			 class -> "jour show_first" then "jour"
+	# daily forecast in divs 
+	#				id -> blockDetails0, blockDetails1, blockDetails2
+	#			 class -> bloc_details
+	# tendances in ul
+	# 				id -> "suivants "
+	#			 class -> listeJoursLE
+	# 		class (li) -> lijourle0,lijourle1,lijourle2,lijourle3 ... 5
 	for line in soup("tr"):
 		period=""
 		# for the last line
@@ -312,7 +322,6 @@ def main():
 
 		content= getContent(dico)
 		if("monde" in dico["domain"]):
-			#france web page layout is very different
 			list = parseMeteoPage(dico,content)
 		else:
 			#france web page layout is very different
@@ -331,10 +340,7 @@ def main():
 			for name,dico in infos.iteritems():
 				content= getContent(dico)
 				list = ""
-				print "dico[domain] : "
-				print dico["domain"]
 				if("monde" in dico["domain"]):
-					#france web page layout is very different
 					list = parseMeteoPage(dico,content)
 				else:
 					#france web page layout is very different

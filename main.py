@@ -43,7 +43,6 @@ class MainPage(webapp.RequestHandler):
 				fullPage = result = urlfetch.fetch(url=(dico["domain"]+dico["suffix"]))
 				list =""
 				if("monde" in dico["domain"]):
-					#france web page layout is very different
 					list = weather.parseMeteoPage(dico,fullPage.content,trackingScript)
 				else:
 					#france web page layout is very different
