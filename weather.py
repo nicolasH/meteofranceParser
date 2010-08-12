@@ -173,6 +173,83 @@ def parseMeteoPage(dico,content,tracking=""):
 	list.append("</body>\n</html>")
 	return list
 
+def parseMeteoPageFrance(dico,content,tracking=""):
+	name = dico["name"]
+	domain = dico["domain"]
+	suffix = dico["suffix"]	
+	list = [u'']
+
+	day=""
+	indent="    "
+	indent2=indent+indent
+
+	cityInfosFilter = SoupStrainer('div',{'class':'choix'})
+	otherSoup=BeautifulSoup(content,parseOnlyThese=cityInfosFilter)
+	print "content for france ???\n"
+	infosPage = otherSoup("p",text=True)
+	#no post code on foreign cities
+	cityName = infosPage[0]
+	
+	if len(infosPage) == 3 :
+		lastUpdate = infosPage[2]
+	else :
+		#cityPostcode = infosPage[1]
+		lastUpdate = infosPage[3]
+
+	links = SoupStrainer('table',{'class':'tableWeather'})
+	soup= BeautifulSoup(content, parseOnlyThese=links)
+
+	pageName = u"Pr&eacute;visions m&eacute;t&eacute;o pour "+cityName+" ".encode('utf-8')
+
+	title = u"<html>\n<head>"+head+"<title>"+pageName+"</title>\n</head>\n<body>\n<div class=\"content\">\n"
+	title +=u"<h1>"+pageName+"</h1>\n".encode('utf-8')
+	title +=u"<h3>R&eacute;cuper&eacute; le "+datetime.now().strftime(timeFormat)+"</h3>\n"
+
+	source = getSourceSentence(domain+suffix,cityName)
+
+	list.append(title)
+	list.append(source)
+	list.append(u"<h3>"+lastUpdate+"</h3>")
+	list.append(u"<table>")
+
+	for line in soup("tr"):
+		period=""
+		# for the last line
+		if len(line) < 4 :
+			continue
+		# for the daily summary	
+		if(line.__dict__['attrs'] != None and len(line.__dict__['attrs'])>0 ):
+			s = str(line.attrs[0][1]).decode('iso-8859-1')
+			n= s.find(" ")
+			if n>=0:
+				if day!=s[:n] :
+					day=s[:n]
+			else:#summary of that day or empty line?
+				sDay=s
+				weather = line.contents[2]
+				if len(weather.contents)==0:
+					#for the first line
+					continue
+				periodLine = parseAndDisplay("# "+sDay,line,domain)
+				list.extend(periodLine)
+				continue
+		###########################
+		## morning, afternoon etc ...
+		period=line.contents[1]
+		if len(period)==0:
+			continue
+		period=period.contents[0]
+		############################
+		## render
+		periodLine = parseAndDisplay(period,line,domain)
+		list.extend(periodLine)
+	
+	list.append(u"</table>\n"+foot+"\n<div>\n")
+	list.append(u"<div clas=\"nav\">Retourner &agrave <a href=\"/\">la list des villes</a></div>\n")
+	list.append(tracking)
+	list.append("</body>\n</html>")
+	return list
+
 
 def getSourceSentence(sourceUrl,pageName):
 	return u"<div class=\"source\">Les informations sur cette page proviennent de la page de pr&eacute;visions de <a href=\""+sourceUrl+"\">M&eacute;t&eacute;o-France pour "+pageName+"</a>.</div>\n"
@@ -234,7 +311,12 @@ def main():
 		dico = infos[page]
 
 		content= getContent(dico)
-		list = parseMeteoPage(dico,content)
+		if("monde" in dico["domain"]):
+			#france web page layout is very different
+			list = parseMeteoPage(dico,content)
+		else:
+			#france web page layout is very different
+			list = parseMeteoPageFrance(dico,content)
 		writeFile(dico["file"],list)
 		print "did parse one of one page :",page	
 		return
@@ -248,7 +330,16 @@ def main():
 		try:
 			for name,dico in infos.iteritems():
 				content= getContent(dico)
-				list = parseMeteoPage(dico,content)
+				list = ""
+				print "dico[domain] : "
+				print dico["domain"]
+				if("monde" in dico["domain"]):
+					#france web page layout is very different
+					list = parseMeteoPage(dico,content)
+				else:
+					#france web page layout is very different
+					list = parseMeteoPageFrance(dico,content)
+
 				writeFile(dico["file"],list)
 				print "did parse one of many page : ",name
 

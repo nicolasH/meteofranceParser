@@ -41,7 +41,15 @@ class MainPage(webapp.RequestHandler):
 					return
 				dico = infos[page]
 				fullPage = result = urlfetch.fetch(url=(dico["domain"]+dico["suffix"]))
-				list = weather.parseMeteoPage(dico,fullPage.content,trackingScript)
+				list =""
+				if("monde" in dico["domain"]):
+					#france web page layout is very different
+					list = weather.parseMeteoPage(dico,fullPage.content,trackingScript)
+				else:
+					#france web page layout is very different
+					list = weather.parseMeteoPageFrance(dico,fullPage.content,trackingScript)
+
+				#list = weather.parseMeteoPage(dico,fullPage.content,trackingScript)
 				outText = u''.join(list)
 				text = outText.encode("iso-8859-1")
 				cityS = CityStore(key_name=page)
