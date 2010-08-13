@@ -173,6 +173,54 @@ def parseMeteoPage(dico,content,tracking=""):
 	list.append("</body>\n</html>")
 	return list
 
+
+def displayInfos(period, weatherName , weatherImg, uv, temperatures, windDir , windImg, windSpeed,windMax):
+	list=[u'']
+
+	weatherName	= unicode.strip(weatherName)
+	weatherImg = unicode.strip(weatherImg)
+	
+	windD = unicode.strip(windDir)
+	windI = unicode.strip(windImg)
+	windS = unicode.strip(windSpeed)[3:]
+	windM = unicode.strip(windMax)
+
+	temp = unicode.strip(temperatures)
+
+	classLine="period"
+	if temp.find("/")>0 :
+		classLine="day"
+		
+	#http://france.meteofrance.com/meteo/pictos/web/SITE/16/sud-sud-ouest.gif
+	#http://france.meteofrance.com/meteo/pictos/web/SITE/30/32_c.gif
+	# I prefer smaller icons
+	weatherImg = weatherImg.replace("CARTE/40","SITE/30")
+	
+	TD=u'</td>\n\t<td class="'+classLine+'">'
+	RTD=u'</td>\n\t<td class="'+classLine+'" align="right">'
+	
+	list.append(u'<tr class="'+classLine+'">\n\t')
+	list.append(u'<td class="'+classLine+'1">')
+	list.append(period)
+	list.append(TD+'<img src="'+imgDomainMobile+weatherImg+'" width="30" height="30" ')
+	list.append(u' alt="')
+	list.append(weatherName)
+	list.append(u'" title="')
+	list.append(weatherName)
+	list.append(u'" />' + RTD )
+	list.append(temp)
+	list.append(TD + u'<img src="'+imgDomainMobile+windImg+'"')
+	list.append(u' width="16" height="16" alt="')
+	list.append(windDir)
+	list.append(u'"title="')
+	list.append(windDir)
+	list.append(u'" />'+RTD)
+	list.append(windSpeed)
+	list.append(RTD)
+	list.append(windM)
+	list.append(u"</td>\n</tr>\n")
+	return list
+	
 def parseMeteoPageFrance(dico,content,tracking=""):
 	name = dico["name"]
 	domain = dico["domain"]
@@ -194,9 +242,6 @@ def parseMeteoPageFrance(dico,content,tracking=""):
 	else :
 		#cityPostcode = infosPage[1]
 		lastUpdate = infosPage[3]
-
-	links = SoupStrainer('div',{'class':'bloc_details'})
-	soup= BeautifulSoup(content, parseOnlyThese=links)
 
 	pageName = u"Pr&eacute;visions m&eacute;t&eacute;o pour "+cityName+" ".encode('utf-8')
 
@@ -222,8 +267,46 @@ def parseMeteoPageFrance(dico,content,tracking=""):
 	# 				id -> "suivants "
 	#			 class -> listeJoursLE
 	# 		class (li) -> lijourle0,lijourle1,lijourle2,lijourle3 ... 5
-	for line in soup("tr"):
-		period=""
+	
+	#print "yaaaaaaa"
+	# daily summaries
+	for i in range(4):
+		id = 'jour'+str(i)
+		links = SoupStrainer('div',{'id':id})
+		soup= BeautifulSoup(content, parseOnlyThese=links)
+		#print "soup : " , len(soup)
+		if(len(soup)==0):
+			continue
+		# Day + UV
+		line = soup("strong")
+		period = line[0].contents[0]
+		periodUV = line[1].contents[0]
+		# Temperature
+		line = soup("em")
+		periodTemp = line[0].contents[0]
+		# Wind
+		line = soup("p")
+		periodWind = line[1].img['alt']
+		periodWindSrc = line[1].img['src']
+		periodWindSpeed = line[1].span.contents[0]
+		line = soup("span")
+		periodRafales = line[2].contents[0]
+		#weather
+		line = soup("div")
+		periodWeather = line[2].img['alt']
+		periodWeatherSrc = line[2].img['src']
+		periodLine = displayInfos(period, periodWeather , periodWeatherSrc, periodUV, periodTemp, periodWind , periodWindSrc, periodWindSpeed, periodRafales)
+		list.extend(periodLine)
+		#print "# " , period
+		#print " ->     : " , periodWeather , periodWeatherSrc
+		#print " -> UV  : " , periodUV
+		#print " -> °C  : " , periodTemp
+		#print " -> wind: " , periodWind , periodWindSrc, periodWindSpeed
+		#print " -> rafales: " , periodRafales
+
+	for line in soup("strong"):
+		period= ""
+		print line
 		# for the last line
 		if len(line) < 4 :
 			continue
