@@ -211,22 +211,28 @@ def displayInfos(period, weatherName , weatherImg, uv, temperatures, windDir , w
 	list.append(weatherName)
 	list.append(u'" />' + RTD )
 	list.append(temp)
-	list.append(TD + u'<img src="'+imgDomainMobile+windImg+'"')
-	list.append(u' width="16" height="16" alt="')
-	list.append(windDir)
-	list.append(u'"title="')
-	list.append(windDir)
-	list.append(u'" />'+RTD)
-	list.append(windSpeed)
-	list.append(RTD)
-	list.append(windM)
+	if(len(windImg)>0):
+		#just a tendance
+		list.append(TD + u'<img src="'+imgDomainMobile+windImg+'"')
+		list.append(u' width="16" height="16" alt="')
+		list.append(windDir)
+		list.append(u'"title="')
+		list.append(windDir)
+		list.append(u'" />'+RTD)
+		list.append(windSpeed)
+		list.append(RTD)
+		list.append(windM)
+	else:
+		list.append(TD+RTD)
+		list.append(RTD)
+
 	list.append(u"</td>\n</tr>\n")
 	return list
 	
 def parsePeriod(soup):
 	line = soup("strong")
 	period = line[0].contents[0]
-	periodUV= ''
+	periodUV= u''
 	if(len(line)>1):
 		periodUV=line[1].contents[0]
 	# Temperature
@@ -234,20 +240,32 @@ def parsePeriod(soup):
 	periodTemp = line[0].contents[0]
 	# Wind
 	line = soup("p")
-	periodWind = line[1].img['alt']
-	periodWindSrc = line[1].img['src']
-	periodWindSpeed = line[1].span.contents[0]
+	periodWind = u''
+	periodWindSrc = u''
+	periodWindSpeed = u''
+	if(len(line)>1):
+		periodWind = line[1].img['alt']
+		periodWindSrc = line[1].img['src']
+		periodWindSpeed = line[1].span.contents[0]
+
 	line = soup("span")
-	periodRafales = line[2].contents[0]
+	periodRafales = u''
+	if(len(line)>2):
+		periodRafales = line[2].contents[0]
 	#weather
 	line = soup("div")
 
-	periodWeather = ''
-	periodWeatherSrc = ''
+	periodWeather = u''
+	periodWeatherSrc = u''
 	if periodTemp.find("/")>0 :
-		periodWeather = line[2].img['alt']
-		periodWeatherSrc = line[2].img['src']
-		# a daily summary
+		if(len(periodWind) >0):
+			# a daily summary
+			periodWeather = line[2].img['alt']
+			periodWeatherSrc = line[2].img['src']
+		else:
+			#a fareway forecast
+			periodWeather = line[0].img['alt']
+			periodWeatherSrc = line[0].img['src']
 	else:
 		periodWeather = line[0].img['alt']
 		periodWeatherSrc = line[0].img['src']
@@ -335,41 +353,20 @@ def parseMeteoPageFrance(dico,content,tracking=""):
 		for echeance in soup('div',{'class':'echeance'}):
 			periodLine = parsePeriod(echeance)			
 			list.extend(periodLine)
-		
 
-	for line in soup("strong"):
-		period= ""
-		print line
-		# for the last line
-		if len(line) < 4 :
-			continue
-		# for the daily summary	
-		if(line.__dict__['attrs'] != None and len(line.__dict__['attrs'])>0 ):
-			s = str(line.attrs[0][1]).decode('iso-8859-1')
-			n= s.find(" ")
-			if n>=0:
-				if day!=s[:n] :
-					day=s[:n]
-			else:#summary of that day or empty line?
-				sDay=s
-				weather = line.contents[2]
-				if len(weather.contents)==0:
-					#for the first line
-					continue
-				periodLine = parseAndDisplay("# "+sDay,line,domain)
-				list.extend(periodLine)
-				continue
-		###########################
-		## morning, afternoon etc ...
-		period=line.contents[1]
-		if len(period)==0:
-			continue
-		period=period.contents[0]
-		############################
-		## render
-		periodLine = parseAndDisplay(period,line,domain)
-		list.extend(periodLine)
-	
+	links = SoupStrainer('ul',{'id':'listeJoursLE'})
+	soup= BeautifulSoup(content, parseOnlyThese=links)
+
+	if(len(soup)==0):
+		return
+
+	for n in range(10):
+		tendance = soup('li',{'class':'lijourle'+str(n)})
+		#print tendance
+		if(len(tendance) >0):
+			tendanceLine = parsePeriod(tendance[0])
+			list.extend(tendanceLine)
+
 	list.append(u"</table>\n"+foot+"\n<div>\n")
 	list.append(u"<div clas=\"nav\">Retourner &agrave <a href=\"/\">la list des villes</a></div>\n")
 	list.append(tracking)
