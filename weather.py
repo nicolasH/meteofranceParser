@@ -195,6 +195,8 @@ def displayInfos(period, weatherName , weatherImg, uv, temperatures, windDir , w
 	#http://france.meteofrance.com/meteo/pictos/web/SITE/30/32_c.gif
 	# I prefer smaller icons
 	weatherImg = weatherImg.replace("CARTE/40","SITE/30")
+	weatherImg = weatherImg.replace("SITE/40","SITE/30")
+	weatherImg = weatherImg.replace("SITE/80","SITE/30")
 	
 	TD=u'</td>\n\t<td class="'+classLine+'">'
 	RTD=u'</td>\n\t<td class="'+classLine+'" align="right">'
@@ -221,6 +223,45 @@ def displayInfos(period, weatherName , weatherImg, uv, temperatures, windDir , w
 	list.append(u"</td>\n</tr>\n")
 	return list
 	
+def parsePeriod(soup):
+	line = soup("strong")
+	period = line[0].contents[0]
+	periodUV= ''
+	if(len(line)>1):
+		periodUV=line[1].contents[0]
+	# Temperature
+	line = soup("em")
+	periodTemp = line[0].contents[0]
+	# Wind
+	line = soup("p")
+	periodWind = line[1].img['alt']
+	periodWindSrc = line[1].img['src']
+	periodWindSpeed = line[1].span.contents[0]
+	line = soup("span")
+	periodRafales = line[2].contents[0]
+	#weather
+	line = soup("div")
+
+	periodWeather = ''
+	periodWeatherSrc = ''
+	if periodTemp.find("/")>0 :
+		periodWeather = line[2].img['alt']
+		periodWeatherSrc = line[2].img['src']
+		# a daily summary
+	else:
+		periodWeather = line[0].img['alt']
+		periodWeatherSrc = line[0].img['src']
+	
+	periodLine = displayInfos(period, periodWeather , periodWeatherSrc, periodUV, periodTemp, periodWind , periodWindSrc, periodWindSpeed, periodRafales)
+	
+	#print "# " , period
+	#print " ->     : " , periodWeather , periodWeatherSrc
+	#print " -> UV  : " , periodUV
+	#print " -> °C  : " , periodTemp
+	#print " -> wind: " , periodWind , periodWindSrc, periodWindSpeed
+	#print " -> rafales: " , periodRafales
+	return periodLine	
+
 def parseMeteoPageFrance(dico,content,tracking=""):
 	name = dico["name"]
 	domain = dico["domain"]
@@ -263,6 +304,9 @@ def parseMeteoPageFrance(dico,content,tracking=""):
 	# daily forecast in divs 
 	#				id -> blockDetails0, blockDetails1, blockDetails2
 	#			 class -> bloc_details
+	# day sub forecast in div
+	#			 class -> echeance
+	#
 	# tendances in ul
 	# 				id -> "suivants "
 	#			 class -> listeJoursLE
@@ -274,35 +318,24 @@ def parseMeteoPageFrance(dico,content,tracking=""):
 		id = 'jour'+str(i)
 		links = SoupStrainer('div',{'id':id})
 		soup= BeautifulSoup(content, parseOnlyThese=links)
-		#print "soup : " , len(soup)
+
 		if(len(soup)==0):
 			continue
-		# Day + UV
-		line = soup("strong")
-		period = line[0].contents[0]
-		periodUV = line[1].contents[0]
-		# Temperature
-		line = soup("em")
-		periodTemp = line[0].contents[0]
-		# Wind
-		line = soup("p")
-		periodWind = line[1].img['alt']
-		periodWindSrc = line[1].img['src']
-		periodWindSpeed = line[1].span.contents[0]
-		line = soup("span")
-		periodRafales = line[2].contents[0]
-		#weather
-		line = soup("div")
-		periodWeather = line[2].img['alt']
-		periodWeatherSrc = line[2].img['src']
-		periodLine = displayInfos(period, periodWeather , periodWeatherSrc, periodUV, periodTemp, periodWind , periodWindSrc, periodWindSpeed, periodRafales)
+
+		periodLine = parsePeriod(soup)
 		list.extend(periodLine)
-		#print "# " , period
-		#print " ->     : " , periodWeather , periodWeatherSrc
-		#print " -> UV  : " , periodUV
-		#print " -> °C  : " , periodTemp
-		#print " -> wind: " , periodWind , periodWindSrc, periodWindSpeed
-		#print " -> rafales: " , periodRafales
+
+		detailsId = 'blocDetails'+str(i)
+		links = SoupStrainer('div',{'id':detailsId})
+		soup= BeautifulSoup(content, parseOnlyThese=links)
+
+		if(len(soup)==0):
+			continue
+
+		for echeance in soup('div',{'class':'echeance'}):
+			periodLine = parsePeriod(echeance)			
+			list.extend(periodLine)
+		
 
 	for line in soup("strong"):
 		period= ""
