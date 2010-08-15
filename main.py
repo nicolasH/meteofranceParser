@@ -26,14 +26,24 @@ class CityStore(db.Model):
 	content = db.TextProperty()
 	dateFetch = db.DateTimeProperty(auto_now_add=True)
 
+class CityInfo(db.Model):
+	cityKey = db.StringProperty()
+	cityDomain = db.StringProperty()
+	cityPage = db.StringProperty()
+	
+	
+class UserPages(db.Model):
+	userID = db.StringProperty()
+	cityKey = db.StringProperty()
+
 class MainPage(webapp.RequestHandler):
     def get(self):
-        
-        self.response.headers['Content-Type'] = 'text/html'
-        infos = weather.getInfos()
-        if len(self.request.path)>1 :
-        	page = self.request.path[1:]
-        	if page in infos :
+        #user = users.get_current_user()
+		self.response.headers['Content-Type'] = 'text/html'
+		infos = weather.getInfos()
+		if len(self.request.path)>1 :
+			page = self.request.path[1:]
+			if page in infos :
 				lastPages = db.GqlQuery("SELECT * FROM CityStore WHERE cityKey = :1",page)
 				lastPages.fetch(1)
 				if lastPages.count() > 0 and (datetime.now() - lastPages[0].dateFetch)< timedelta(minutes=59):
@@ -58,10 +68,10 @@ class MainPage(webapp.RequestHandler):
 				cityS.put()
 				return
         
-        indexStrings= weather.generateIndex(infos,False,trackingScript)
-        self.response.out.write(u''.join(indexStrings))
-        
-		
+		indexStrings= weather.generateIndex(infos,False,trackingScript)
+		self.response.out.write(u''.join(indexStrings))
+
+
 application = webapp.WSGIApplication(
                                      [('/.*', MainPage)],
                                      debug=True)

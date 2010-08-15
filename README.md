@@ -1,6 +1,6 @@
 ## meteofrance parser
 
-This project is used to parse the meteofrance.com page about a city. It will read the information that are contained in the forecast table and write it in a flat html table.
+This project is used to parse the meteofrance.com page about a city. It will read the information that are contained in the forecast table and write it in a flat html table. Since they are now (July 2010) published on the same page, the forecast now also includes the tendances. 
 
 The main script is "weather.py". It parse the pages given in the names.txt and writes the output every hour.
 A sample of the expectd input is the "names.txt" file, which the "weather.py" script reads by default.
@@ -17,4 +17,4 @@ Prevessin,http://france.meteofrance.com/,france/meteo?PREVISIONS_PORTLET.path=pr
 
 This project is released under the GPLv2 License that you can find at http://www.gnu.org/licenses/gpl-2.0.txt. Learn more about the GPL here http://www.gnu.org/licenses/gpl-2.0.html
 
-Copyright Nicolas Hoibian.
+Copyright (c) Nicolas Hoibian 2009-2010.

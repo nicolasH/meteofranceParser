@@ -1,11 +1,15 @@
 application: me-teo
-version: 1
+version: 2
 runtime: python
 api_version: 1
 
 handlers:
 - url: /css
   static_dir: css
+
+- url: /me
+  script: me.py
+  login: required
 
 - url: /.*
   script: main.py
