@@ -26,16 +26,6 @@ class CityStore(db.Model):
 	content = db.TextProperty()
 	dateFetch = db.DateTimeProperty(auto_now_add=True)
 
-class CityInfo(db.Model):
-	cityKey = db.StringProperty()
-	cityDomain = db.StringProperty()
-	cityPage = db.StringProperty()
-	
-	
-class UserPages(db.Model):
-	userID = db.StringProperty()
-	cityKey = db.StringProperty()
-
 class MainPage(webapp.RequestHandler):
     def get(self):
         #user = users.get_current_user()

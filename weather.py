@@ -32,7 +32,18 @@ foot =u"""
 #timeFormat = "%A %d %B %Y - %H:%M:%S " 
 timeFormat = "%Y/%m/%d &agrave; %H:%M:%S " 
 
+def getCityNameFrance(content):
+	cityInfosFilter = SoupStrainer('div',{'class':'choix'})
+	otherSoup=BeautifulSoup(content,parseOnlyThese=cityInfosFilter)
+	infosPage = otherSoup("p",text=True)
+	return u''+infosPage[0]
 
+def getCityNameMonde(content):
+	cityInfosFilter = SoupStrainer('div',{'class':'infos'})
+	otherSoup=BeautifulSoup(content,parseOnlyThese=cityInfosFilter)
+	infosPage = otherSoup("p",text=True)
+	return u''+infosPage[0]
+	
 ###########
 def parseAndDisplay(period,line,domain):
 	list=[u'']
@@ -174,7 +185,7 @@ def parseMeteoPage(dico,content,tracking=""):
 	return list
 
 
-def displayInfos(period, weatherName , weatherImg, uv, temperatures, windDir , windImg, windSpeed,windMax):
+def displayInfos(period, weatherName , weatherImg, uv =u'', temperatures = u'', windDir = u'', windImg = u'', windSpeed = u'',windMax = u''):
 	list=[u'']
 
 	weatherName	= unicode.strip(weatherName)
@@ -240,23 +251,16 @@ def parsePeriod(soup):
 	periodTemp = line[0].contents[0]
 	# Wind
 	line = soup("p")
-	periodWind = u''
-	periodWindSrc = u''
-	periodWindSpeed = u''
 	if(len(line)>1):
 		periodWind = line[1].img['alt']
 		periodWindSrc = line[1].img['src']
 		periodWindSpeed = line[1].span.contents[0]
 
 	line = soup("span")
-	periodRafales = u''
 	if(len(line)>2):
 		periodRafales = line[2].contents[0]
 	#weather
 	line = soup("div")
-
-	periodWeather = u''
-	periodWeatherSrc = u''
 	if periodTemp.find("/")>0 :
 		if(len(periodWind) >0):
 			# a daily summary
@@ -272,12 +276,6 @@ def parsePeriod(soup):
 	
 	periodLine = displayInfos(period, periodWeather , periodWeatherSrc, periodUV, periodTemp, periodWind , periodWindSrc, periodWindSpeed, periodRafales)
 	
-	#print "# " , period
-	#print " ->     : " , periodWeather , periodWeatherSrc
-	#print " -> UV  : " , periodUV
-	#print " -> °C  : " , periodTemp
-	#print " -> wind: " , periodWind , periodWindSrc, periodWindSpeed
-	#print " -> rafales: " , periodRafales
 	return periodLine	
 
 def parseMeteoPageFrance(dico,content,tracking=""):
