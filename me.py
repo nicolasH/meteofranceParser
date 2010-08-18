@@ -13,10 +13,13 @@ class CityInfo(db.Model):
 	cityPage = db.StringProperty()
 
 
-class UserPages(db.Model):
+class MyCities(db.Model):
 	userID = db.StringProperty()
-	isPrivate = db.StringProperty()
-	cityKey = db.ReferenceProperty()
+	cityKey = db.StringProperty()
+
+class UserAccount(db.Model):
+	userNick = db.StringProperty()
+	private = db.BooleanProperty()
 
 urlForm = """
 	<form action="/me" method="post">
@@ -35,26 +38,69 @@ def urlCode(url):
 		return [False, url[len(baseMonde):]]
 	return None
 	
+meta0 = "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=iso-8859-1\" />"
+
+def urlFromCode(isFrench,code):
+	if isFrench:
+		return baseFrance+code
+	else:
+		return baseMonde+code
+		
+
+def knownCitiesDIV(cities,title):
+	list = ['<div class="cities">'+title+'<ul>']
+	for city in cities:
+		list.append('<li>')
+		if city.cityIsFrench :
+			list.append("French")
+		else:
+			list.append("World")
+		list.append(" city -> ")
+		list.append('<a href="'+urlFromCode(city.cityIsFrench,city.cityPage)+'">' + city.cityName + '</a></li>')
+	list.append('</ul></div>')
+	return list			
+	
 class UserSetupPage(webapp.RequestHandler):
 	
 	def get(self):
-		self.response.headers['Content-Type'] = 'text/html'
+		self.response.headers['Content-Type'] = 'text/html; charset=iso-8859-1'
 		user = users.get_current_user()
-		self.response.out.write("<html><head></head><body>")
+		userID = user.user_id()
+		account = UserAccount()
+		account.userNick = user.nickname()
+		account.private= False
+		account.get_or_insert(key_name=user.user_id())
+
+		self.response.out.write("<html><head>"+meta0+"</head><body>")
 		self.response.out.write("User info : ")
 		self.response.out.write(user)
 		self.response.out.write(" id: " + user.user_id())
 		self.response.out.write(urlForm)
-		self.response.out.write("</body></html>")
+
+		myCities = db.GqlQuery("SELECT * FROM MyCities WHERE userID = :1",userID)
+		#NOT OPTIMAL
+		personnalCities = []
+		for mine in myCities:
+			#Never removing a city, are we ?
+			personnalCities.append(CityInfo.get_by_key_name(mine.cityKey))
+				
+		list = knownCitiesDIV(personnalCities,"My Cities")
+		self.response.out.write(u''.join(list))
+		
+		allCities = db.GqlQuery("SELECT * FROM CityInfo LIMIT 50")
+		list = knownCitiesDIV(allCities,"Known Cities")
+		self.response.out.write(u''.join(list))
+		self.response.out.write('<body></html>')
+			
 		return
 		
 	def post(self):
-		self.response.out.write('<html><body>You ('+users.get_current_user().user_id()
-+') want to get the weather forecast from : <br/>')
+		userID = users.get_current_user().user_id()
+		self.response.out.write('<html><head>'+meta0+'</head><body>You ('+userID +') want to get the weather forecast from : <br/>')
 		url = cgi.escape(self.request.get('url'))
 		res = urlCode(url)
 		if res is None :
-			self.response.out.write('unknown url')
+			self.response.out.write('unknown page')
 		else :
 			text = 'code '+ res[1]
 			url = res[1]
@@ -63,12 +109,12 @@ class UserSetupPage(webapp.RequestHandler):
 				text = 'a french city,' + text
 				url = baseFrance + url
 			else :
-				text =  ' a foreign city,' + text 
+				text =  ' a world city,' + text 
 				url = baseMonde + url
 				
 			self.response.out.write(text)
-		#
-			text = "Gonna insert the following object "
+			#
+			text = "<br/>Gonna insert the following object "
 			result = urlfetch.fetch(url)
 			key = ''
 			if res[0]:
@@ -77,21 +123,27 @@ class UserSetupPage(webapp.RequestHandler):
 				key='fr_'+res[1]
 			else:
 				cityName = weather.getCityNameMonde(result.content)
-				text += "[foreign, "+cityName+", "+res[1]+"]"
+				text += "[world, "+cityName+", "+res[1]+"]"
 				key='mo_'+res[1]
 			
 			self.response.out.write(text)
 			
-			#cn = cityName.encode("iso-8859-1")
-			#cn = db.Text(cityName, encoding="iso-8859-1")
-
+			cityName = u'' + cityName
 			
 			city = CityInfo(key_name=key)
 			city.cityIsFrench = res[0]
 			city.cityPage = res[1]
 			city.cityName = cityName
 			city.put()
-						 		
+			
+			link = MyCities(key_name=key+"_"+userID)
+			link.cityKey = key
+			link.userID = userID
+			link.put()
+		myCities = db.GqlQuery("SELECT * FROM CityInfo LIMIT 50")
+		list = knownCitiesDIV(myCities,"Known Cities")
+		self.response.out.write(u''.join(list))
+		
 		self.response.out.write('</body></html>')
 	
 application = webapp.WSGIApplication(

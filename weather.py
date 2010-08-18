@@ -36,13 +36,13 @@ def getCityNameFrance(content):
 	cityInfosFilter = SoupStrainer('div',{'class':'choix'})
 	otherSoup=BeautifulSoup(content,parseOnlyThese=cityInfosFilter)
 	infosPage = otherSoup("p",text=True)
-	return u''+infosPage[0]
+	return infosPage[0]
 
 def getCityNameMonde(content):
 	cityInfosFilter = SoupStrainer('div',{'class':'infos'})
 	otherSoup=BeautifulSoup(content,parseOnlyThese=cityInfosFilter)
 	infosPage = otherSoup("p",text=True)
-	return u''+infosPage[0]
+	return infosPage[0]
 	
 ###########
 def parseAndDisplay(period,line,domain):
