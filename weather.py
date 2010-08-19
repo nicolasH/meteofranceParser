@@ -241,6 +241,9 @@ def displayInfos(period, weatherName , weatherImg, uv =u'', temperatures = u'', 
 	return list
 	
 def parsePeriod(soup):
+	##Defining variables, so that I can use them later wether they have been filled or not
+	period = periodWeather = periodWeatherSrc = periodUV = periodTemp = periodWind =  periodWindSrc =  periodWindSpeed = periodRafales = u''
+	
 	line = soup("strong")
 	period = line[0].contents[0]
 	periodUV= u''
@@ -278,8 +281,8 @@ def parsePeriod(soup):
 	
 	return periodLine	
 
-def parseMeteoPageFrance(dico,content,tracking=""):
-	name = dico["name"]
+
+def getWeatherContentHTML_france(dico,content):
 	domain = dico["domain"]
 	suffix = dico["suffix"]	
 	list = [u'']
@@ -301,8 +304,7 @@ def parseMeteoPageFrance(dico,content,tracking=""):
 		lastUpdate = infosPage[3]
 
 	pageName = u"Pr&eacute;visions m&eacute;t&eacute;o pour "+cityName+" ".encode('utf-8')
-
-	title = u"<html>\n<head>"+head+"<title>"+pageName+"</title>\n</head>\n<body>\n<div class=\"content\">\n"
+	title =u"<div class=\"content\">\n"
 	title +=u"<h1>"+pageName+"</h1>\n".encode('utf-8')
 	title +=u"<h3>R&eacute;cuper&eacute; le "+datetime.now().strftime(timeFormat)+"</h3>\n"
 
@@ -365,7 +367,39 @@ def parseMeteoPageFrance(dico,content,tracking=""):
 			tendanceLine = parsePeriod(tendance[0])
 			list.extend(tendanceLine)
 
-	list.append(u"</table>\n"+foot+"\n<div>\n")
+	list.append(u"</table>\n")
+	return list
+	
+def parseMeteoPageFrance(dico,content,tracking=""):
+	domain = dico["domain"]
+	suffix = dico["suffix"]	
+	list = [u'']
+
+	day=""
+	indent="    "
+	indent2=indent+indent
+
+	cityInfosFilter = SoupStrainer('div',{'class':'choix'})
+	otherSoup=BeautifulSoup(content,parseOnlyThese=cityInfosFilter)
+	infosPage = otherSoup("p",text=True)
+	#no post code on foreign cities
+	cityName = infosPage[0]
+	
+	if len(infosPage) == 3 :
+		lastUpdate = infosPage[2]
+	else :
+		#cityPostcode = infosPage[1]
+		lastUpdate = infosPage[3]
+
+	pageName = u"Pr&eacute;visions m&eacute;t&eacute;o pour "+cityName+" ".encode('utf-8')
+
+	top = u"<html>\n<head>"+head+"<title>"+pageName+"</title>\n</head>\n<body>\n"
+	
+
+	list = [top]
+	list.extend(getWeatherContentHTML_france(dico,content))
+
+	list.append(foot+"\n<div>\n")
 	list.append(u"<div clas=\"nav\">Retourner &agrave <a href=\"/\">la list des villes</a></div>\n")
 	list.append(tracking)
 	list.append("</body>\n</html>")

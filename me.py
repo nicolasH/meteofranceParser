@@ -30,6 +30,11 @@ urlForm = """
 
 baseFrance = 'http://france.meteofrance.com/france/meteo?PREVISIONS_PORTLET.path=previsionsville/'
 baseMonde = 'http://monde.meteofrance.com/monde/previsions?MONDE_PORTLET.path=previsionsvilleMonde/'
+domainFrance =  "http://france.meteofrance.com/"
+suffixFrance = "france/meteo?PREVISIONS_PORTLET.path=previsionsville/"
+domainMonde = "http://monde.meteofrance.com/"
+suffixMonde = "monde/meteo?MONDE_PORTLET.path=previsionsvilleMonde/"
+
 
 def urlCode(url):
 	if url[0:len(baseFrance)] == baseFrance and len(url) < len(baseFrance) +7 :
@@ -38,7 +43,8 @@ def urlCode(url):
 		return [False, url[len(baseMonde):]]
 	return None
 	
-meta0 = "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=iso-8859-1\" />"
+#meta0 = "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=iso-8859-1\" />"
+meta0 = "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\" />"
 
 def urlFromCode(isFrench,code):
 	if isFrench:
@@ -145,9 +151,52 @@ class UserSetupPage(webapp.RequestHandler):
 		self.response.out.write(u''.join(list))
 		
 		self.response.out.write('</body></html>')
+
+class UserWeatherPages(webapp.RequestHandler):
+	
+	def get(self):
+		self.response.headers['Content-Type'] = 'text/html'
+		userID = users.get_current_user().user_id()
+
+		self.response.out.write(u"<html><head>"+meta0+"</head><body>")
+		self.response.out.write(u"My Forecasts : ")
+
+		myCities = db.GqlQuery("SELECT * FROM MyCities WHERE userID = :1",userID)
+		#NOT OPTIMAL
+		personnalCities = []
+		for mine in myCities:
+			#Never removing a city, are we ?
+			personnalCities.append(CityInfo.get_by_key_name(mine.cityKey))
+		
+		dicos = []
+		for city in personnalCities:
+			dico = {}
+			if city.cityIsFrench :
+				dico["domain"] = domainFrance
+				dico["suffix"] = suffixFrance + city.cityPage
+				self.response.out.write(u'My french urls : ['+  dico["domain"] +']['+ dico['suffix']+']')
+			else:
+				dico["domain"] = domainMonde
+				dico["suffix"] = suffixMonde+ city.cityPage
+			dicos.append(dico)
+		
+		for dico in dicos:
+			fullPage = result = urlfetch.fetch(url=(dico["domain"]+dico["suffix"]))
+			if("PREVISIONS_PORTLET" in dico["suffix"]):
+				#France web page layout is very different
+				list = weather.getWeatherContentHTML_france(dico,fullPage.content)
+				outText = u''.join(list)
+				text = outText.encode("iso-8859-1")
+				text2= db.Text(text, encoding="utf-8")
+				self.response.out.write(text2)
+		
+		self.response.out.write(u'<body></html>')
+			
+		return
 	
 application = webapp.WSGIApplication(
-                                     [('/me',UserSetupPage)],
+                                     [('/me',UserSetupPage),
+                                     ('/mine',UserWeatherPages)],
                                      debug=True)
 
 def main():
