@@ -30,9 +30,11 @@ urlForm = """
 
 baseFrance = 'http://france.meteofrance.com/france/meteo?PREVISIONS_PORTLET.path=previsionsville/'
 baseMonde = 'http://monde.meteofrance.com/monde/previsions?MONDE_PORTLET.path=previsionsvilleMonde/'
+
 domainFrance =  "http://france.meteofrance.com/"
-suffixFrance = "france/meteo?PREVISIONS_PORTLET.path=previsionsville/"
 domainMonde = "http://monde.meteofrance.com/"
+
+suffixFrance = "france/meteo?PREVISIONS_PORTLET.path=previsionsville/"
 suffixMonde = "monde/meteo?MONDE_PORTLET.path=previsionsvilleMonde/"
 
 
@@ -43,9 +45,6 @@ def urlCode(url):
 		return [False, url[len(baseMonde):]]
 	return None
 	
-#meta0 = "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=iso-8859-1\" />"
-meta0 = "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\" />"
-
 def urlFromCode(isFrench,code):
 	if isFrench:
 		return baseFrance+code
@@ -77,7 +76,7 @@ class UserSetupPage(webapp.RequestHandler):
 		account.private= False
 		account.get_or_insert(key_name=user.user_id())
 
-		self.response.out.write("<html><head>"+meta0+"</head><body>")
+		self.response.out.write("<html><head>"+weather.head+"</head><body>")
 		self.response.out.write("User info : ")
 		self.response.out.write(user)
 		self.response.out.write(" id: " + user.user_id())
@@ -158,8 +157,8 @@ class UserWeatherPages(webapp.RequestHandler):
 		self.response.headers['Content-Type'] = 'text/html'
 		userID = users.get_current_user().user_id()
 
-		self.response.out.write(u"<html><head>"+meta0+"</head><body>")
-		self.response.out.write(u"My Forecasts : ")
+		self.response.out.write(u"<html><head>"+weather.head+"</head><body>")
+		self.response.out.write(u'<div class="content"><h1> My Forecasts : </h1></div>')
 
 		myCities = db.GqlQuery("SELECT * FROM MyCities WHERE userID = :1",userID)
 		#NOT OPTIMAL
@@ -174,7 +173,6 @@ class UserWeatherPages(webapp.RequestHandler):
 			if city.cityIsFrench :
 				dico["domain"] = domainFrance
 				dico["suffix"] = suffixFrance + city.cityPage
-				self.response.out.write(u'My french urls : ['+  dico["domain"] +']['+ dico['suffix']+']')
 			else:
 				dico["domain"] = domainMonde
 				dico["suffix"] = suffixMonde+ city.cityPage
@@ -189,7 +187,8 @@ class UserWeatherPages(webapp.RequestHandler):
 				text = outText.encode("iso-8859-1")
 				text2= db.Text(text, encoding="utf-8")
 				self.response.out.write(text2)
-		
+				
+		self.response.out.write(weather.foot)
 		self.response.out.write(u'<body></html>')
 			
 		return
