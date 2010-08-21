@@ -2,6 +2,10 @@ cron:
 - description: regular update
   url: /Prevessin
   schedule: every 1 hours
+
+- description: regular update
+  url: /Nice
+  schedule: every 1 hours
  
 - description: regular update
   url: /Geneva

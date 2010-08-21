@@ -101,7 +101,7 @@ class UserSetupPage(webapp.RequestHandler):
 		
 	def post(self):
 		userID = users.get_current_user().user_id()
-		self.response.out.write('<html><head>'+meta0+'</head><body>You ('+userID +') want to get the weather forecast from : <br/>')
+		self.response.out.write('<html><head>'+weather.head+'</head><body>You ('+userID +') want to get the weather forecast from : <br/>')
 		url = cgi.escape(self.request.get('url'))
 		res = urlCode(url)
 		if res is None :

@@ -247,7 +247,7 @@ def parsePeriod(soup):
 	line = soup("strong")
 	period = line[0].contents[0]
 	periodUV= u''
-	if(len(line)>1):
+	if len(line)>1 and len(line[1].contents)>0:
 		periodUV=line[1].contents[0]
 	# Temperature
 	line = soup("em")
@@ -400,7 +400,7 @@ def parseMeteoPageFrance(dico,content,tracking=""):
 	list.extend(getWeatherContentHTML_france(dico,content))
 
 	list.append(foot+"\n<div>\n")
-	list.append(u"<div clas=\"nav\">Retourner &agrave <a href=\"/\">la list des villes</a></div>\n")
+	list.append(u"<div class=\"nav\">Retourner &agrave <a href=\"/\">la liste des villes</a></div>\n")
 	list.append(tracking)
 	list.append("</body>\n</html>")
 	return list
