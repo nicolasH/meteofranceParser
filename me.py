@@ -57,10 +57,10 @@ def knownCitiesDIV(cities,title):
 	for city in cities:
 		list.append('<li>')
 		if city.cityIsFrench :
-			list.append("French")
+			list.append("[france]")
 		else:
-			list.append("World")
-		list.append(" city -> ")
+			list.append("[monde]")
+		list.append(" -> ")
 		list.append('<a href="'+urlFromCode(city.cityIsFrench,city.cityPage)+'">' + city.cityName + '</a></li>')
 	list.append('</ul></div>')
 	return list			
