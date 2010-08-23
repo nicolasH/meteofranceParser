@@ -2,13 +2,19 @@ MeteoFrance parser:
 -> project is available as me-teo.appspot.com
 
 - Look into replacing the icons from the page by opensource ones.
-- Add a form to submit your own city page.
+
+- In the user page : load the forecast from already stored pages.
+- Support world cities for the 'mine' page.
+- Add a checkbox to add cities to your favorites.
+- Add a checkbox to remove cities from your favorites.
+- In 'all cities' gray out / do not show the ones that are already favorites. 
 - Add navigation to the site.
 	- Add a swipe style to switch from a city to another. 
 	- Add a link back to the list of cities @done(2010-01-10)
 - Store the data to have an history of the forecasts.
 
 Done Items
+- Add a form to submit your own city page. @done(2010-08-23)
 - Change the pictures domain so that they are displayed on the iphone (change domain prefix to "mobile") @done(2010-01-11)
 - Get the name and time from the meteofrance page. @done(2009-12-06)
 - Store the list of cities in a database/ datastore  @done(2009-12-13)

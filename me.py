@@ -22,10 +22,13 @@ class UserAccount(db.Model):
 	private = db.BooleanProperty()
 
 urlForm = """
-	<form action="/me" method="post">
-    	<div><input size="130" name="url" ></div>
-        <div><input type="submit" value="Add City" /></div>
+	<div class="submitURL">
+	<form class="submitCityURL" action="/me" method="post">
+		<div class="submitTitle" >Ajoutez l'url d'une ville :</div>
+		<div class="urlField" ><input  size="110" name="url" ></div>
+		<div class="urlSubmit" ><input type="submit" value="Ajouter" /></div>
 	</form>
+	</div>
 	"""
 
 baseFrance = 'http://france.meteofrance.com/france/meteo?PREVISIONS_PORTLET.path=previsionsville/'
@@ -56,12 +59,12 @@ def knownCitiesDIV(cities,title):
 	list = ['<div class="cities">'+title+'<ul>']
 	for city in cities:
 		list.append('<li>')
+		list.append('<a href="'+urlFromCode(city.cityIsFrench,city.cityPage)+'">' + city.cityName + '</a>')
 		if city.cityIsFrench :
-			list.append("[france]")
+			list.append(" (france)")
 		else:
-			list.append("[monde]")
-		list.append(" -> ")
-		list.append('<a href="'+urlFromCode(city.cityIsFrench,city.cityPage)+'">' + city.cityName + '</a></li>')
+			list.append(" (monde)")
+		list.append('</li>')
 	list.append('</ul></div>')
 	return list			
 	
@@ -77,9 +80,9 @@ class UserSetupPage(webapp.RequestHandler):
 		account.get_or_insert(key_name=user.user_id())
 
 		self.response.out.write("<html><head>"+weather.head+"</head><body>")
-		self.response.out.write("User info : ")
-		self.response.out.write(user)
-		self.response.out.write(" id: " + user.user_id())
+		self.response.out.write("<div class=\"content\">")
+		self.response.out.write("<h1>Welcome "+user.nickname()+"</h1>")
+
 		self.response.out.write(urlForm)
 
 		myCities = db.GqlQuery("SELECT * FROM MyCities WHERE userID = :1",userID)
@@ -89,12 +92,13 @@ class UserSetupPage(webapp.RequestHandler):
 			#Never removing a city, are we ?
 			personnalCities.append(CityInfo.get_by_key_name(mine.cityKey))
 				
-		list = knownCitiesDIV(personnalCities,"My Cities")
+		list = knownCitiesDIV(personnalCities,"Mes villes :")
 		self.response.out.write(u''.join(list))
 		
 		allCities = db.GqlQuery("SELECT * FROM CityInfo LIMIT 50")
-		list = knownCitiesDIV(allCities,"Known Cities")
+		list = knownCitiesDIV(allCities,"Toute les autres villes :")
 		self.response.out.write(u''.join(list))
+		self.response.out.write('</div>')
 		self.response.out.write('<body></html>')
 			
 		return
@@ -158,7 +162,7 @@ class UserWeatherPages(webapp.RequestHandler):
 		userID = users.get_current_user().user_id()
 
 		self.response.out.write(u"<html><head>"+weather.head+"</head><body>")
-		self.response.out.write(u'<div class="content"><h1> My Forecasts : </h1></div>')
+		self.response.out.write(u'<div class="content"><h1> Mes Pr&eacute;visions:</h1></div>')
 
 		myCities = db.GqlQuery("SELECT * FROM MyCities WHERE userID = :1",userID)
 		#NOT OPTIMAL

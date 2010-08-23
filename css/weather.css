@@ -10,6 +10,7 @@ body {
 h1 {
 	font-size: 1.4em;
 	font-style: bold;
+	text-align: center;
 }
 
 h3 {
@@ -23,6 +24,14 @@ h3 {
 	background: white;
 	padding: 1ex;
 	margin: 0 auto;
+}
+.submitURL {
+	text-align: center;
+	width: 100%;
+}
+.urlField {
+	#width: 500px;
+	margin-left: -40%;
 }
 
 table {
