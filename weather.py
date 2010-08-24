@@ -109,8 +109,7 @@ def parseAndDisplay(period,line,domain):
 
 
 ###########
-def parseMeteoPage(dico,content,tracking=""):
-	name = dico["name"]
+def getWeatherContentHTML_monde(dico,content):
 	domain = dico["domain"]
 	suffix = dico["suffix"]	
 	list = [u'']
@@ -135,7 +134,7 @@ def parseMeteoPage(dico,content,tracking=""):
 
 	pageName = u"Pr&eacute;visions m&eacute;t&eacute;o pour "+cityName+" ".encode('utf-8')
 
-	title = u"<html>\n<head>"+head+"<title>"+pageName+"</title>\n</head>\n<body>\n<div class=\"content\">\n"
+	title = u"<div class=\"content\">\n"
 	title +=u"<h1>"+pageName+"</h1>\n".encode('utf-8')
 	title +=u"<h3>R&eacute;cuper&eacute; le "+datetime.now().strftime(timeFormat)+"</h3>\n"
 
@@ -178,13 +177,45 @@ def parseMeteoPage(dico,content,tracking=""):
 		periodLine = parseAndDisplay(period,line,domain)
 		list.extend(periodLine)
 	
-	list.append(u"</table>\n"+foot+"\n<div>\n")
+	list.append(u"</table>\n<div>\n")
+	return list
+	
+def parseMeteoPage(dico,content,tracking=""):
+	name = dico["name"]
+	domain = dico["domain"]
+	suffix = dico["suffix"]	
+	list = [u'']
+
+	day=""
+	indent="    "
+	indent2=indent+indent
+
+	cityInfosFilter = SoupStrainer('div',{'class':'infos'})
+	otherSoup=BeautifulSoup(content,parseOnlyThese=cityInfosFilter)
+	infosPage = otherSoup("p",text=True)
+	#no post code on foreign cities
+	cityName = infosPage[0]
+	if len(infosPage) == 3 :
+		lastUpdate = infosPage[2]
+	else :
+		#cityPostcode = infosPage[1]
+		lastUpdate = infosPage[3]
+
+	links = SoupStrainer('table',{'class':'tableWeather'})
+	soup= BeautifulSoup(content, parseOnlyThese=links)
+
+	pageName = u"Pr&eacute;visions m&eacute;t&eacute;o pour "+cityName+" ".encode('utf-8')
+
+	title = u"<html>\n<head>"+head+"<title>"+pageName+"</title>\n</head>\n<body>\n"
+
+	list.append(title)
+	list.extend(getWeatherContentHTML_monde(dico,content))
 	list.append(u"<div clas=\"nav\">Retourner &agrave <a href=\"/\">la list des villes</a></div>\n")
 	list.append(tracking)
 	list.append("</body>\n</html>")
 	return list
 
-
+#only france prevsions.
 def displayInfos(period, weatherName , weatherImg, uv =u'', temperatures = u'', windDir = u'', windImg = u'', windSpeed = u'',windMax = u''):
 	list=[u'']
 
@@ -240,8 +271,9 @@ def displayInfos(period, weatherName , weatherImg, uv =u'', temperatures = u'', 
 	list.append(u"</td>\n</tr>\n")
 	return list
 	
+#for the france part only.
 def parsePeriod(soup):
-	##Defining variables, so that I can use them later wether they have been filled or not
+	##Defining variables, so that I can use them later whether they have been filled or not
 	period = periodWeather = periodWeatherSrc = periodUV = periodTemp = periodWind =  periodWindSrc =  periodWindSpeed = periodRafales = u''
 	
 	line = soup("strong")

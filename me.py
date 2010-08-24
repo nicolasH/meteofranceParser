@@ -38,7 +38,7 @@ domainFrance =  "http://france.meteofrance.com/"
 domainMonde = "http://monde.meteofrance.com/"
 
 suffixFrance = "france/meteo?PREVISIONS_PORTLET.path=previsionsville/"
-suffixMonde = "monde/meteo?MONDE_PORTLET.path=previsionsvilleMonde/"
+suffixMonde = "monde/previsions?MONDE_PORTLET.path=previsionsvilleMonde/"
 
 
 def urlCode(url):
@@ -55,16 +55,19 @@ def urlFromCode(isFrench,code):
 		return baseMonde+code
 		
 
-def knownCitiesDIV(cities,title):
+def knownCitiesDIV(cities,title,formID):
 	list = ['<div class="cities">'+title+'<ul>']
 	for city in cities:
 		list.append('<li>')
-		list.append('<a href="'+urlFromCode(city.cityIsFrench,city.cityPage)+'">' + city.cityName + '</a>')
+		list.append('<label for="'+city.key().name()+"_"+formID+'"><input type="checkbox" id="'+city.key().name()+'"/>'+city.cityName)
 		if city.cityIsFrench :
-			list.append(" (france)")
+			list.append(", france.")
 		else:
-			list.append(" (monde)")
+			list.append(", monde.")
+		list.append('</label>')
+		list.append(' (voir <a href="'+urlFromCode(city.cityIsFrench,city.cityPage)+'">original</a>)')
 		list.append('</li>')
+		
 	list.append('</ul></div>')
 	return list			
 	
@@ -92,11 +95,11 @@ class UserSetupPage(webapp.RequestHandler):
 			#Never removing a city, are we ?
 			personnalCities.append(CityInfo.get_by_key_name(mine.cityKey))
 				
-		list = knownCitiesDIV(personnalCities,"Mes villes :")
+		list = knownCitiesDIV(personnalCities,"Mes villes :","enlever")
 		self.response.out.write(u''.join(list))
 		
 		allCities = db.GqlQuery("SELECT * FROM CityInfo LIMIT 50")
-		list = knownCitiesDIV(allCities,"Toute les autres villes :")
+		list = knownCitiesDIV(allCities,"Toute les autres villes :","ajouter")
 		self.response.out.write(u''.join(list))
 		self.response.out.write('</div>')
 		self.response.out.write('<body></html>')
@@ -183,10 +186,17 @@ class UserWeatherPages(webapp.RequestHandler):
 			dicos.append(dico)
 		
 		for dico in dicos:
-			fullPage = result = urlfetch.fetch(url=(dico["domain"]+dico["suffix"]))
+			fullPage = urlfetch.fetch(url=(dico["domain"]+dico["suffix"]))
 			if("PREVISIONS_PORTLET" in dico["suffix"]):
 				#France web page layout is very different
 				list = weather.getWeatherContentHTML_france(dico,fullPage.content)
+				outText = u''.join(list)
+				text = outText.encode("iso-8859-1")
+				text2= db.Text(text, encoding="utf-8")
+				self.response.out.write(text2)
+			else:
+				#Monde web page layout is very different
+				list = weather.getWeatherContentHTML_monde(dico,fullPage.content)
 				outText = u''.join(list)
 				text = outText.encode("iso-8859-1")
 				text2= db.Text(text, encoding="utf-8")
