@@ -59,12 +59,14 @@ def knownCitiesDIV(cities,title,formID):
 	list = ['<div class="cities">'+title+'<ul>']
 	for city in cities:
 		list.append('<li>')
-		list.append('<label for="'+city.key().name()+"_"+formID+'"><input type="checkbox" id="'+city.key().name()+'"/>'+city.cityName)
+		key = city.key().name()+"_"+formID
+		list.append('<label for="'+key+'"><input type="checkbox" id="'+key+'"/>'+city.cityName)
 		if city.cityIsFrench :
 			list.append(", france.")
 		else:
 			list.append(", monde.")
 		list.append('</label>')
+
 		list.append(' (voir <a href="'+urlFromCode(city.cityIsFrench,city.cityPage)+'">original</a>)')
 		list.append('</li>')
 		
@@ -74,7 +76,8 @@ def knownCitiesDIV(cities,title,formID):
 class UserSetupPage(webapp.RequestHandler):
 	
 	def get(self):
-		self.response.headers['Content-Type'] = 'text/html; charset=iso-8859-1'
+		#self.response.headers['Content-Type'] = 'text/html; charset=iso-8859-1'
+		self.response.headers['Content-Type'] = 'text/html; charset=UTF-8'
 		user = users.get_current_user()
 		userID = user.user_id()
 		account = UserAccount()
@@ -83,7 +86,7 @@ class UserSetupPage(webapp.RequestHandler):
 		account.get_or_insert(key_name=user.user_id())
 
 		self.response.out.write("<html><head>"+weather.head+"</head><body>")
-		self.response.out.write("<div class=\"content\">")
+		self.response.out.write("<div class=\"me\">")
 		self.response.out.write("<h1>Welcome "+user.nickname()+"</h1>")
 
 		self.response.out.write(urlForm)
@@ -108,7 +111,8 @@ class UserSetupPage(webapp.RequestHandler):
 		
 	def post(self):
 		userID = users.get_current_user().user_id()
-		self.response.out.write('<html><head>'+weather.head+'</head><body>You ('+userID +') want to get the weather forecast from : <br/>')
+		self.response.headers['Content-Type'] = 'text/html; charset=UTF-8'
+		self.response.out.write('<html><head>'+weather.head+'</head><body><div class="me">You ('+userID +') want to get the weather forecast from : <br/>')
 		url = cgi.escape(self.request.get('url'))
 		res = urlCode(url)
 		if res is None :
@@ -153,10 +157,10 @@ class UserSetupPage(webapp.RequestHandler):
 			link.userID = userID
 			link.put()
 		myCities = db.GqlQuery("SELECT * FROM CityInfo LIMIT 50")
-		list = knownCitiesDIV(myCities,"Known Cities")
+		list = knownCitiesDIV(myCities,"Known Cities","rien")
 		self.response.out.write(u''.join(list))
 		
-		self.response.out.write('</body></html>')
+		self.response.out.write('</div></body></html>')
 
 class UserWeatherPages(webapp.RequestHandler):
 	
@@ -192,14 +196,14 @@ class UserWeatherPages(webapp.RequestHandler):
 				list = weather.getWeatherContentHTML_france(dico,fullPage.content)
 				outText = u''.join(list)
 				text = outText.encode("iso-8859-1")
-				text2= db.Text(text, encoding="utf-8")
+				text2= db.Text(text, encoding="UTF-8")
 				self.response.out.write(text2)
 			else:
 				#Monde web page layout is very different
 				list = weather.getWeatherContentHTML_monde(dico,fullPage.content)
 				outText = u''.join(list)
 				text = outText.encode("iso-8859-1")
-				text2= db.Text(text, encoding="utf-8")
+				text2= db.Text(text, encoding="UTF-8")
 				self.response.out.write(text2)
 				
 		self.response.out.write(weather.foot)

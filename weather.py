@@ -20,7 +20,7 @@ listFile = "index.html"
 imgDomainMobile = "http://mobile.meteofrance.com/"
 # header is geared toward iphone
 head = u"""
-	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
 	<meta name="viewport" content="width=350, user-scalable=yes">
 	<link rel="stylesheet" href="css/weather.css" type="text/css" />
 """

@@ -25,14 +25,22 @@ h3 {
 	padding: 1ex;
 	margin: 0 auto;
 }
+.me {
+	width: 400px;
+	background: white;
+	padding: 1ex;
+	margin: 0 auto;
+}
+
+.urlField {
+	margin-left: -22%;
+}
+
 .submitURL {
 	text-align: center;
 	width: 100%;
 }
-.urlField {
-	#width: 500px;
-	margin-left: -40%;
-}
+
 
 table {
 	font-size: 1em;	
