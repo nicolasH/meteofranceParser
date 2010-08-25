@@ -210,7 +210,7 @@ def parseMeteoPage(dico,content,tracking=""):
 
 	list.append(title)
 	list.extend(getWeatherContentHTML_monde(dico,content))
-	list.append(u"<div clas=\"nav\">Retourner &agrave <a href=\"/\">la list des villes</a></div>\n")
+	list.append(foot + u"<div class=\"nav\">Retourner &agrave <a href=\"/\">la list des villes</a></div>\n")
 	list.append(tracking)
 	list.append("</body>\n</html>")
 	return list
