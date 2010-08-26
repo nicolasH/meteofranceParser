@@ -60,12 +60,14 @@ def knownCitiesDIV(cities,title,formID):
 	for city in cities:
 		list.append('<li>')
 		key = city.key().name()+"_"+formID
-		list.append('<label for="'+key+'"><input type="checkbox" id="'+key+'"/>'+city.cityName)
+		cityKey = city.key().name()
+		list.append(city.cityName)
+		
 		if city.cityIsFrench :
 			list.append(", france.")
 		else:
 			list.append(", monde.")
-		list.append('</label>')
+		list.append('<form action="/me" method="post"><input type="hidden" id="which" value='+cityKey+'"/><input type="submit" value="'+formID+'"/></form>')
 
 		list.append(' (voir <a href="'+urlFromCode(city.cityIsFrench,city.cityPage)+'">original</a>)')
 		list.append('</li>')
