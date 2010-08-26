@@ -58,18 +58,17 @@ def urlFromCode(isFrench,code):
 def knownCitiesDIV(cities,title,formID):
 	list = ['<div class="cities">'+title+'<ul>']
 	for city in cities:
-		list.append('<li>')
 		key = city.key().name()+"_"+formID
 		cityKey = city.key().name()
+		list.append('<li><form action="/me" method="post"><input type="hidden" id="which" value='+cityKey+'"/>')
 		list.append(city.cityName)
 		
 		if city.cityIsFrench :
 			list.append(", france.")
 		else:
 			list.append(", monde.")
-		list.append('<form action="/me" method="post"><input type="hidden" id="which" value='+cityKey+'"/><input type="submit" value="'+formID+'"/></form>')
-
-		list.append(' (voir <a href="'+urlFromCode(city.cityIsFrench,city.cityPage)+'">original</a>)')
+		list.append(' (voir <a href="'+urlFromCode(city.cityIsFrench,city.cityPage)+'">original</a>) ')
+		list.append(' <input type="submit" value="'+formID+'"/></form>')
 		list.append('</li>')
 		
 	list.append('</ul></div>')
