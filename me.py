@@ -40,7 +40,10 @@ domainMonde = "http://monde.meteofrance.com/"
 suffixFrance = "france/meteo?PREVISIONS_PORTLET.path=previsionsville/"
 suffixMonde = "monde/previsions?MONDE_PORTLET.path=previsionsvilleMonde/"
 
-
+actionURL='/manage'
+actionAdd = 'ajouter'
+actionRemove = 'enlever'
+whichID = 'which_city'
 def urlCode(url):
 	if url[0:len(baseFrance)] == baseFrance and len(url) < len(baseFrance) +7 :
 		return [True,url[len(baseFrance):]]		
@@ -56,11 +59,11 @@ def urlFromCode(isFrench,code):
 		
 
 def knownCitiesDIV(cities,title,formID):
-	list = ['<div class="cities">'+title+'<ul>']
+	list = ['<div class="cities">'+title+'<ul>\n']
 	for city in cities:
 		key = city.key().name()+"_"+formID
 		cityKey = city.key().name()
-		list.append('<li><form action="/me" method="post"><input type="hidden" id="which" value='+cityKey+'"/>')
+		list.append('<li><form action="'+actionURL+'" method="post"><input type="hidden" id="'+whichID+'" value='+cityKey+'"/>')
 		list.append(city.cityName)
 		
 		if city.cityIsFrench :
@@ -68,12 +71,23 @@ def knownCitiesDIV(cities,title,formID):
 		else:
 			list.append(", monde.")
 		list.append(' (voir <a href="'+urlFromCode(city.cityIsFrench,city.cityPage)+'">original</a>) ')
-		list.append(' <input type="submit" value="'+formID+'"/></form>')
-		list.append('</li>')
+		list.append(' <input type="submit" id="action" value="'+formID+'"/></form>\n')
+		list.append('</li>\n')
 		
 	list.append('</ul></div>')
 	return list			
 	
+class UserWeatherPagesManager(webapp.RequestHandler):
+
+	def post(self):
+		userID = users.get_current_user().user_id()
+		cityKey = cgi.escape(self.request.get(whichID))
+		self.response.headers['Content-Type'] = 'text/html; charset=UTF-8'
+		cgi.escape(self.request.get('action'))
+		cgi.escape(self.request.get(whichID))
+		city = CityInfo.get(key_name=cityKey)	
+		
+			
 class UserSetupPage(webapp.RequestHandler):
 	
 	def get(self):
@@ -214,6 +228,7 @@ class UserWeatherPages(webapp.RequestHandler):
 	
 application = webapp.WSGIApplication(
                                      [('/me',UserSetupPage),
+                                     ('/manage',UserWeatherPagesManager),
                                      ('/mine',UserWeatherPages)],
                                      debug=True)
 
