@@ -4,6 +4,7 @@ from google.appengine.api import users
 from google.appengine.ext import db
 from google.appengine.api import urlfetch
 
+import re
 import cgi
 import weather
 
@@ -20,6 +21,39 @@ class MyCities(db.Model):
 class UserAccount(db.Model):
 	userNick = db.StringProperty()
 	private = db.BooleanProperty()
+
+scriptString = """
+	<script language="javascript">
+	function asyncEdit(cityID,action){
+		var xhr; 
+    	try {  
+    		xhr = new ActiveXObject('Msxml2.XMLHTTP');
+    	}catch (e) {
+        	try {   
+        		xhr = new ActiveXObject('Microsoft.XMLHTTP');
+        	}catch (e2) {
+				try {  
+					xhr = new XMLHttpRequest();
+          		}catch (e3) {  xhr = false;   }
+        	}
+     	}
+ 
+    	xhr.onreadystatechange  = function(){ 
+			if(xhr.readyState  == 4){
+        		if(xhr.status  == 200) 
+        	         document.getElementById('ajax').value="Received:"  + xhr.responseText; 
+        	    else 
+        	         document.getElementById('ajax').value="Error code " + xhr.status;
+        	 }
+    	}; 
+
+   		xhr.open("GET", "/manage?which_city="+cityID+"&action="+action,  true); 
+   		xhr.send(null);
+	}
+</script>
+<input id="ajax" type="text" value="response should appear here" size="100" />
+"""
+
 
 urlForm = """
 	<div class="submitURL">
@@ -63,7 +97,7 @@ def knownCitiesDIV(cities,title,formID):
 	for city in cities:
 		key = city.key().name()+"_"+formID
 		cityKey = city.key().name()
-		list.append('<li><form action="'+actionURL+'" method="post"><input type="hidden" id="'+whichID+'" value='+cityKey+'"/>')
+		list.append('<li>')
 		list.append(city.cityName)
 		
 		if city.cityIsFrench :
@@ -71,7 +105,7 @@ def knownCitiesDIV(cities,title,formID):
 		else:
 			list.append(", monde.")
 		list.append(' (voir <a href="'+urlFromCode(city.cityIsFrench,city.cityPage)+'">original</a>) ')
-		list.append(' <input type="submit" id="action" value="'+formID+'"/></form>\n')
+		list.append('<input type="button" name="action" value="'+formID+'" onclick="asyncEdit(\''+cityKey+'\',\''+formID+'\');" /></form>\n')
 		list.append('</li>\n')
 		
 	list.append('</ul></div>')
@@ -79,13 +113,38 @@ def knownCitiesDIV(cities,title,formID):
 	
 class UserWeatherPagesManager(webapp.RequestHandler):
 
-	def post(self):
+	def get(self):
 		userID = users.get_current_user().user_id()
-		cityKey = cgi.escape(self.request.get(whichID))
 		self.response.headers['Content-Type'] = 'text/html; charset=UTF-8'
-		cgi.escape(self.request.get('action'))
-		cgi.escape(self.request.get(whichID))
-		city = CityInfo.get(key_name=cityKey)	
+		action = cgi.escape(self.request.get('action'))
+
+		city_asked = cgi.escape(self.request.get('which_city'))
+		city_code = ''
+		possibleID=""
+		regex = re.compile("([fr_|mo_]+)(\d+)")
+		rez = regex.search(city_asked)
+		r = rez.groups() 
+		if len(r)!=2 or (r[0]!="fr_" and r[0]!="mo_"):
+			self.response.out.write("ha HA! nice try.")
+			return
+		#key=""
+		if r[0]== "fr_":
+			key= r[0] + r[1][0:6]
+		if r[0]== "mo_":
+			key= r[0] + r[1][0:5]
+		
+		self.response.out.write("city code = "+key)
+		if action == actionAdd :
+			city = CityInfo.get_by_key_name(key)
+		
+			link = MyCities(key_name=key+"_"+userID)
+			link.cityKey = key
+			link.userID = userID
+			link.put()
+		if action == actionRemove :
+			link = MyCities.get_by_key_name(key+"_"+userID)
+			link.delete()
+		return
 		
 			
 class UserSetupPage(webapp.RequestHandler):
@@ -101,6 +160,8 @@ class UserSetupPage(webapp.RequestHandler):
 		account.get_or_insert(key_name=user.user_id())
 
 		self.response.out.write("<html><head>"+weather.head+"</head><body>")
+		
+		self.response.out.write(scriptString)
 		self.response.out.write("<div class=\"me\">")
 		self.response.out.write("<h1>Welcome "+user.nickname()+"</h1>")
 
