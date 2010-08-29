@@ -37,21 +37,35 @@ scriptString = """
           		}catch (e3) {  xhr = false;   }
         	}
      	}
- 
-    	xhr.onreadystatechange  = function(){ 
+ 		var elementID='item_'+cityID;
+    	xhr.onreadystatechange  = function(test){ 
 			if(xhr.readyState  == 4){
-        		if(xhr.status  == 200) 
-        	         document.getElementById('ajax').value="Received:"  + xhr.responseText; 
-        	    else 
+        		if(xhr.status  == 200) {
+        			item = document.getElementById(elementID);
+        			if(action=="enlever"){
+        				document.getElementById("list_enlever").removeChild(item);
+           				document.getElementById("list_ajouter").appendChild(item);
+           				document.getElementById("action_"+cityID).value="ajouter";
+        			}
+        			if(action=="ajouter"){
+        				document.getElementById("list_ajouter").removeChild(item);
+           				document.getElementById("list_enlever").appendChild(item);
+           				document.getElementById("action_"+cityID).value="enlever";
+        			}
+        	    } else {
         	         document.getElementById('ajax').value="Error code " + xhr.status;
+        	    }
         	 }
     	}; 
 
    		xhr.open("GET", "/manage?which_city="+cityID+"&action="+action,  true); 
    		xhr.send(null);
+						
+	}
+	function handleResponse(cityID,action,elementID){
+		
 	}
 </script>
-<input id="ajax" type="text" value="response should appear here" size="100" />
 """
 
 
@@ -92,12 +106,17 @@ def urlFromCode(isFrench,code):
 		return baseMonde+code
 		
 
-def knownCitiesDIV(cities,title,formID):
-	list = ['<div class="cities">'+title+'<ul>\n']
+def knownCitiesDIV(cities,excepted,title,form_id):
+	list = ['<div class="cities">'+title+'<ul id="list_'+form_id+'" >\n']
 	for city in cities:
-		key = city.key().name()+"_"+formID
-		cityKey = city.key().name()
-		list.append('<li>')
+		city_key = city.key().name()
+		
+		if excepted is not None and city_key in excepted:
+			continue
+		
+		key = city.key().name()+"_"+form_id
+
+		list.append('<li id="item_'+city_key+'" >')
 		list.append(city.cityName)
 		
 		if city.cityIsFrench :
@@ -105,7 +124,7 @@ def knownCitiesDIV(cities,title,formID):
 		else:
 			list.append(", monde.")
 		list.append(' (voir <a href="'+urlFromCode(city.cityIsFrench,city.cityPage)+'">original</a>) ')
-		list.append('<input type="button" name="action" value="'+formID+'" onclick="asyncEdit(\''+cityKey+'\',\''+formID+'\');" /></form>\n')
+		list.append('<input type="button" id="action_'+city_key+'" name="action" value="'+form_id+'" onclick="asyncEdit(\''+city_key+'\',\''+form_id+'\');" /></form>\n')
 		list.append('</li>\n')
 		
 	list.append('</ul></div>')
@@ -170,15 +189,17 @@ class UserSetupPage(webapp.RequestHandler):
 		myCities = db.GqlQuery("SELECT * FROM MyCities WHERE userID = :1",userID)
 		#NOT OPTIMAL
 		personnalCities = []
+		exceptedKeys=[]
 		for mine in myCities:
 			#Never removing a city, are we ?
 			personnalCities.append(CityInfo.get_by_key_name(mine.cityKey))
+			exceptedKeys.append(mine.cityKey)
 				
-		list = knownCitiesDIV(personnalCities,"Mes villes :","enlever")
+		list = knownCitiesDIV(personnalCities,None,"Mes villes :","enlever")
 		self.response.out.write(u''.join(list))
 		
 		allCities = db.GqlQuery("SELECT * FROM CityInfo LIMIT 50")
-		list = knownCitiesDIV(allCities,"Toute les autres villes :","ajouter")
+		list = knownCitiesDIV(allCities,exceptedKeys,"Toute les autres villes :","ajouter")
 		self.response.out.write(u''.join(list))
 		self.response.out.write('</div>')
 		self.response.out.write('<body></html>')
@@ -233,7 +254,7 @@ class UserSetupPage(webapp.RequestHandler):
 			link.userID = userID
 			link.put()
 		myCities = db.GqlQuery("SELECT * FROM CityInfo LIMIT 50")
-		list = knownCitiesDIV(myCities,"Known Cities","rien")
+		list = knownCitiesDIV(myCities,None,"Known Cities","rien")
 		self.response.out.write(u''.join(list))
 		
 		self.response.out.write('</div></body></html>')
