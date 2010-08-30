@@ -22,9 +22,9 @@ class UserAccount(db.Model):
 	userNick = db.StringProperty()
 	private = db.BooleanProperty()
 
-scriptString = """
-	<script language="javascript">
-	function asyncEdit(cityID,action){
+scriptBaseString="""
+	 <script language="javascript">
+	function getRequest(){
 		var xhr; 
     	try {  
     		xhr = new ActiveXObject('Msxml2.XMLHTTP');
@@ -37,6 +37,11 @@ scriptString = """
           		}catch (e3) {  xhr = false;   }
         	}
      	}
+     	return xhr;
+     	}
+
+	function asyncEdit(cityID,action){
+		var xhr =getRequest();
  		var elementID='item_'+cityID;
     	xhr.onreadystatechange  = function(test){ 
 			if(xhr.readyState  == 4){
@@ -62,19 +67,38 @@ scriptString = """
    		xhr.send(null);
 						
 	}
-	function handleResponse(cityID,action,elementID){
-		
+
+	function asyncNewCity(){
+		var http = getRequest();
+
+		http.onreadystatechange  = function(){ 
+			if(http.readyState  == 4){
+        		if(http.status  == 200) {        			
+	     	         document.getElementById('ajax').value=http.responseText;
+        	    } else {
+        	         document.getElementById('ajax').value="Error code " + http.status + " " +http.responseText;
+        	    }
+        	 }
+    	}; 
+		var test = document.getElementById("urlField").value;
+ 		var url="url="+test;
+ 		http.open("POST", "/me",  true); 
+   		http.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+		http.setRequestHeader("Content-length", url.length);
+		http.setRequestHeader("Connection", "close");
+   		http.send(url);
+						
 	}
 </script>
+<textarea id="ajax" ></textarea>
 """
-
 
 urlForm = """
 	<div class="submitURL">
-	<form class="submitCityURL" action="/me" method="post">
+	<form class="submitCityURL" action="" method="post">
 		<div class="submitTitle" >Ajoutez l'url d'une ville :</div>
-		<div class="urlField" ><input  size="110" name="url" ></div>
-		<div class="urlSubmit" ><input type="submit" value="Ajouter" /></div>
+		<div class="urlField" ><input  size="110" id="urlField" name="url" ></div>
+		<div class="urlSubmit" ><input type="button" value="Ajouter" onclick="asyncNewCity();" /></div>
 	</form>
 	</div>
 	"""
@@ -180,7 +204,7 @@ class UserSetupPage(webapp.RequestHandler):
 
 		self.response.out.write("<html><head>"+weather.head+"</head><body>")
 		
-		self.response.out.write(scriptString)
+		self.response.out.write(scriptBaseString)
 		self.response.out.write("<div class=\"me\">")
 		self.response.out.write("<h1>Welcome "+user.nickname()+"</h1>")
 
@@ -203,31 +227,27 @@ class UserSetupPage(webapp.RequestHandler):
 		self.response.out.write(u''.join(list))
 		self.response.out.write('</div>')
 		self.response.out.write('<body></html>')
-			
+		
 		return
 		
 	def post(self):
-		userID = users.get_current_user().user_id()
 		self.response.headers['Content-Type'] = 'text/html; charset=UTF-8'
-		self.response.out.write('<html><head>'+weather.head+'</head><body><div class="me">You ('+userID +') want to get the weather forecast from : <br/>')
+		userID = users.get_current_user().user_id()
+		
 		url = cgi.escape(self.request.get('url'))
 		res = urlCode(url)
 		if res is None :
-			self.response.out.write('unknown page')
+			self.response.out.write('unknown page : '+url)
+			return
 		else :
-			text = 'code '+ res[1]
 			url = res[1]
 			cityName = u''
 			if res[0] : 
-				text = 'a french city,' + text
 				url = baseFrance + url
 			else :
-				text =  ' a world city,' + text 
 				url = baseMonde + url
 				
-			self.response.out.write(text)
-			#
-			text = "<br/>Gonna insert the following object "
+			text = "Adding this : "
 			result = urlfetch.fetch(url)
 			key = ''
 			if res[0]:
@@ -252,12 +272,7 @@ class UserSetupPage(webapp.RequestHandler):
 			link = MyCities(key_name=key+"_"+userID)
 			link.cityKey = key
 			link.userID = userID
-			link.put()
-		myCities = db.GqlQuery("SELECT * FROM CityInfo LIMIT 50")
-		list = knownCitiesDIV(myCities,None,"Known Cities","rien")
-		self.response.out.write(u''.join(list))
-		
-		self.response.out.write('</div></body></html>')
+			link.put()		
 
 class UserWeatherPages(webapp.RequestHandler):
 	
