@@ -96,7 +96,7 @@ scriptBaseString="""
 urlForm = """
 	<div class="submitURL">
 	<form class="submitCityURL" action="" method="post">
-		<div class="submitTitle" >Ajoutez l'url d'une ville :</div>
+		<div class="submitTitle" >Ajoutez l'url d'une ville de <a href="http://france.meteofrance.com" >France</a> ou "<a href="http://monde.meteofrance.com" >du Monde</a>":</div>
 		<div class="urlField" ><input  size="110" id="urlField" name="url" ></div>
 		<div class="urlSubmit" ><input type="button" value="Ajouter" onclick="asyncNewCity();" /></div>
 	</form>
@@ -219,7 +219,13 @@ class UserSetupPage(webapp.RequestHandler):
 			personnalCities.append(CityInfo.get_by_key_name(mine.cityKey))
 			exceptedKeys.append(mine.cityKey)
 				
-		list = knownCitiesDIV(personnalCities,None,"Mes villes :","enlever")
+		divTitle =""
+		if(len(personnalCities)>0):
+			divTitle= u'Mes Villes (<a href="/mine">Pr&eacute;visions</a>) :'
+		else:
+			divTitle=u'Vous devriez ajouter des villes'
+
+		list = knownCitiesDIV(personnalCities,None,divTitle,"enlever")
 		self.response.out.write(u''.join(list))
 		
 		allCities = db.GqlQuery("SELECT * FROM CityInfo LIMIT 50")
