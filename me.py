@@ -51,12 +51,14 @@ scriptBaseString="""
         				document.getElementById("list_enlever").removeChild(item);
            				document.getElementById("list_ajouter").appendChild(item);
            				document.getElementById("action_"+cityID).value="ajouter";
+          				document.getElementById("action_"+cityID).onclick = function(){asyncEdit(cityID,'ajouter')};
         			}
         			if(action=="ajouter"){
         				document.getElementById("list_ajouter").removeChild(item);
            				document.getElementById("list_enlever").appendChild(item);
            				document.getElementById("action_"+cityID).value="enlever";
-        			}
+        				document.getElementById("action_"+cityID).onclick = function(){asyncEdit(cityID,'enlever')};
+         			}
         	    } else {
         	         document.getElementById('ajax').value="Error code " + xhr.status;
         	    }
@@ -73,13 +75,18 @@ scriptBaseString="""
 
 		http.onreadystatechange  = function(){ 
 			if(http.readyState  == 4){
-        		if(http.status  == 200) {        			
-	     	         document.getElementById('ajax').value=http.responseText;
+        		if(http.status  == 200) {
+     	         	document.getElementById('ajax').value=http.responseText;
+     	         	node = document.createElement('li');
+     	         	li = eval('(' + http.responseText + ')');
+       				node.innerHTML = li.content;
+       				node.id = li.id;
+       				document.getElementById("list_enlever").appendChild(node);
         	    } else {
         	         document.getElementById('ajax').value="Error code " + http.status + " " +http.responseText;
         	    }
         	 }
-    	}; 
+    	};
 		var test = document.getElementById("urlField").value;
  		var url="url="+test;
  		http.open("POST", "/me",  true); 
@@ -130,27 +137,31 @@ def urlFromCode(isFrench,code):
 		return baseMonde+code
 		
 
-def knownCitiesDIV(cities,excepted,title,form_id):
-	list = ['<div class="cities">'+title+'<ul id="list_'+form_id+'" >\n']
-	for city in cities:
-		city_key = city.key().name()
-		
-		if excepted is not None and city_key in excepted:
-			continue
-		
-		key = city.key().name()+"_"+form_id
+def cityLIcontent(city,form_id):
+	city_key = city.key().name()
+	key = city_key+"_"+form_id
+	list =[]
+	list.append(city.cityName)
+	
+	if city.cityIsFrench :
+		list.append(", france.")
+	else:
+		list.append(", monde.")
+	list.append(" (voir <a href='"+urlFromCode(city.cityIsFrench,city.cityPage)+"'>original</a>) ")
+	list.append("<input type='button' id='action_"+city_key+"' name='action' value='"+form_id+"' ") 
+	list.append('onclick="asyncEdit(\''+city_key+'\',document.getElementById(\'action_'+city_key+'\').value);" ')
+	list.append("/>")
+	return u''.join(list)
 
-		list.append('<li id="item_'+city_key+'" >')
-		list.append(city.cityName)
+def knownCitiesDIV(cities,excepted,title,form_id):
+	list = ['<div class="cities">'+title+'\n\t\t<ul id="list_'+form_id+'" >\n']
+	for city in cities:
 		
-		if city.cityIsFrench :
-			list.append(", france.")
-		else:
-			list.append(", monde.")
-		list.append(' (voir <a href="'+urlFromCode(city.cityIsFrench,city.cityPage)+'">original</a>) ')
-		list.append('<input type="button" id="action_'+city_key+'" name="action" value="'+form_id+'" onclick="asyncEdit(\''+city_key+'\',\''+form_id+'\');" /></form>\n')
-		list.append('</li>\n')
-		
+		if excepted is not None and city.key().name() in excepted:
+			continue
+		list.append('\t\t\t<li id="item_'+city.key().name()+'" >')
+		list.append(cityLIcontent(city,form_id))
+		list.append("</li>\n")		
 	list.append('</ul></div>')
 	return list			
 	
@@ -245,40 +256,41 @@ class UserSetupPage(webapp.RequestHandler):
 		if res is None :
 			self.response.out.write('unknown page : '+url)
 			return
+		url = res[1]
+		cityName = u''
+		if res[0] : 
+			url = baseFrance + url
 		else :
-			url = res[1]
-			cityName = u''
-			if res[0] : 
-				url = baseFrance + url
-			else :
-				url = baseMonde + url
-				
-			text = "Adding this : "
-			result = urlfetch.fetch(url)
-			key = ''
-			if res[0]:
-				cityName = weather.getCityNameFrance(result.content)
-				text += "[french, "+cityName+", "+res[1]+"]"
-				key='fr_'+res[1]
-			else:
-				cityName = weather.getCityNameMonde(result.content)
-				text += "[world, "+cityName+", "+res[1]+"]"
-				key='mo_'+res[1]
+			url = baseMonde + url
 			
-			self.response.out.write(text)
+		text = "Adding this : "
+		result = urlfetch.fetch(url)
+		key = ''
+		if res[0]:
+			cityName = weather.getCityNameFrance(result.content)
+			text += "[french, "+cityName+", "+res[1]+"]"
+			key='fr_'+res[1]
+		else:
+			cityName = weather.getCityNameMonde(result.content)
+			text += "[world, "+cityName+", "+res[1]+"]"
+			key='mo_'+res[1]
 			
-			cityName = u'' + cityName
+		#self.response.out.write(text)
+		
+		cityName = u'' + cityName
+		
+		city = CityInfo(key_name=key)
+		city.cityIsFrench = res[0]
+		city.cityPage = res[1]
+		city.cityName = cityName
+		city.put()
 			
-			city = CityInfo(key_name=key)
-			city.cityIsFrench = res[0]
-			city.cityPage = res[1]
-			city.cityName = cityName
-			city.put()
-			
-			link = MyCities(key_name=key+"_"+userID)
-			link.cityKey = key
-			link.userID = userID
-			link.put()		
+		link = MyCities(key_name=key+"_"+userID)
+		link.cityKey = key
+		link.userID = userID
+		link.put()
+		
+		self.response.out.write('{"id":"item_'+key+'","content":"'+cityLIcontent(city,"enlever").replace('"','\\"')+'"}')
 
 class UserWeatherPages(webapp.RequestHandler):
 	
