@@ -19,5 +19,8 @@ handlers:
   script: me.py
   login: required
 
+- url: /there/.*
+  script: me.py
+
 - url: /.*
   script: main.py

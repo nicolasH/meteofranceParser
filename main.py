@@ -61,7 +61,6 @@ class MainPage(webapp.RequestHandler):
 		indexStrings= weather.generateIndex(infos,False,trackingScript)
 		self.response.out.write(u''.join(indexStrings))
 
-
 application = webapp.WSGIApplication(
                                      [('/.*', MainPage)],
                                      debug=True)

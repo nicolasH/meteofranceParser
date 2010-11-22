@@ -102,11 +102,11 @@ scriptBaseString="""
 
 urlForm = """
 	<div class="submitURL">
-	<form class="submitCityURL" action="" method="post">
-		<div class="submitTitle" >Ajoutez l'url d'une ville de <a href="http://france.meteofrance.com" >France</a> ou "<a href="http://monde.meteofrance.com" >du Monde</a>":</div>
-		<div class="urlField" ><input  size="110" id="urlField" name="url" ></div>
+	<!--form class="submitCityURL" action="" method="post"-->
+		<div class="submitTitle" >Ajoutez l'url d'une ville de <a href="http://france.meteofrance.com" >France</a> ou "<a href="http://monde.meteofrance.com/monde/previsions" >du Monde</a>":</div>
+		<div class="urlField" ><input   id="urlField" name="url" ></div>
 		<div class="urlSubmit" ><input type="button" value="Ajouter" onclick="asyncNewCity();" /></div>
-	</form>
+	<!--/form-->
 	</div>
 	"""
 
@@ -135,7 +135,20 @@ def urlFromCode(isFrench,code):
 		return baseFrance+code
 	else:
 		return baseMonde+code
-		
+
+def cityCodeFromString(city_asked):
+	regex = re.compile("([fr_|mo_]+)(\d+)")
+	rez = regex.search(city_asked)
+	r = rez.groups()
+	key=""
+	if len(r)!=2 or (r[0]!="fr_" and r[0]!="mo_"):
+		return ""
+	#key=""
+	if r[0]== "fr_":
+		key= r[0] + r[1][0:6]
+	if r[0]== "mo_":
+		key= r[0] + r[1][0:5]
+	return key
 
 def cityLIcontent(city,form_id):
 	city_key = city.key().name()
@@ -164,7 +177,48 @@ def knownCitiesDIV(cities,excepted,title,form_id):
 		list.append("</li>\n")		
 	list.append('</ul></div>')
 	return list			
-	
+
+
+class SingleWeatherPage(webapp.RequestHandler):
+
+	def get(self):
+		self.response.headers['Content-Type'] = 'text/html; charset=UTF-8'
+		self.response.out.write(u"<html><head>"+weather.head+"</head><body>")
+		city_asked = cgi.escape(self.request.path[7:])
+		city_code = cityCodeFromString(city_asked)
+		if(len(city_code)==0):
+			self.response.out.write("ha HA! nice try.")
+			return
+		#self.response.out.write("city code = "+city_code)
+
+		dico = {}
+
+		if city_code[0:3]== "fr_":
+			dico["domain"] = domainFrance
+			dico["suffix"] = suffixFrance + city_code[3:9]
+
+		if city_code[0:3]== "mo_":
+			dico["domain"] = domainMonde
+			dico["suffix"] = suffixMonde + city_code[3:8]
+		
+		fullPage = urlfetch.fetch(url=(dico["domain"]+dico["suffix"]))
+		list =[]
+		if("PREVISIONS_PORTLET" in dico["suffix"]):
+			#France web page layout is very different
+			list = weather.getWeatherContentHTML_france(dico,fullPage.content)
+		else:
+			#Monde web page layout is very different
+			list = weather.getWeatherContentHTML_monde(dico,fullPage.content)
+		
+		outText = u''.join(list)
+		text = outText.encode("iso-8859-1")
+		text2= db.Text(text, encoding="UTF-8")
+		self.response.out.write(text2)
+		
+		self.response.out.write(weather.foot)
+		self.response.out.write(u'<body></html>')
+		return
+
 class UserWeatherPagesManager(webapp.RequestHandler):
 
 	def get(self):
@@ -175,18 +229,12 @@ class UserWeatherPagesManager(webapp.RequestHandler):
 		city_asked = cgi.escape(self.request.get('which_city'))
 		city_code = ''
 		possibleID=""
-		regex = re.compile("([fr_|mo_]+)(\d+)")
-		rez = regex.search(city_asked)
-		r = rez.groups() 
-		if len(r)!=2 or (r[0]!="fr_" and r[0]!="mo_"):
-			self.response.out.write("ha HA! nice try.")
-			return
-		#key=""
-		if r[0]== "fr_":
-			key= r[0] + r[1][0:6]
-		if r[0]== "mo_":
-			key= r[0] + r[1][0:5]
-		
+		if(city_asked != None):
+			key = cityCodeFromString(city_asked)
+			if(key.len ==0):
+				self.response.out.write("ha HA! nice try.")
+				return
+
 		self.response.out.write("city code = "+key)
 		if action == actionAdd :
 			city = CityInfo.get_by_key_name(key)
@@ -198,8 +246,7 @@ class UserWeatherPagesManager(webapp.RequestHandler):
 		if action == actionRemove :
 			link = MyCities.get_by_key_name(key+"_"+userID)
 			link.delete()
-		return
-		
+		return		
 			
 class UserSetupPage(webapp.RequestHandler):
 	
@@ -341,10 +388,12 @@ class UserWeatherPages(webapp.RequestHandler):
 			
 		return
 	
+	
 application = webapp.WSGIApplication(
                                      [('/me',UserSetupPage),
                                      ('/manage',UserWeatherPagesManager),
-                                     ('/mine',UserWeatherPages)],
+                                     ('/mine',UserWeatherPages),
+                                     ('/there/.*',SingleWeatherPage)],
                                      debug=True)
 
 def main():

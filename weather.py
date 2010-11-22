@@ -22,7 +22,7 @@ imgDomainMobile = "http://mobile.meteofrance.com/"
 head = u"""
 	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
 	<meta name="viewport" content="width=350, user-scalable=yes">
-	<link rel="stylesheet" href="css/weather.css" type="text/css" />
+	<link rel="stylesheet" href="/css/weather.css" type="text/css" />
 """
 foot =u"""
 	<div class="footer">

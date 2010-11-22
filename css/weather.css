@@ -25,6 +25,7 @@ h3 {
 	padding: 1ex;
 	margin: 0 auto;
 }
+
 .me {
 	width: 400px;
 	background: white;
@@ -32,8 +33,10 @@ h3 {
 	margin: 0 auto;
 }
 
-.urlField {
+input#urlField {
 	margin-left: -22%;
+	margin-right: -22%;
+	width: 600px;
 }
 
 .submitURL {
