@@ -7,6 +7,7 @@ from google.appengine.api import urlfetch
 import re
 import cgi
 import weather
+import main as main_
 
 class CityInfo(db.Model):
 	cityName = db.StringProperty()
@@ -216,6 +217,7 @@ class SingleWeatherPage(webapp.RequestHandler):
 		self.response.out.write(text2)
 		
 		self.response.out.write(weather.foot)
+		self.response.out.write(main_.trackingScript)
 		self.response.out.write(u'<body></html>')
 		return
 
@@ -384,6 +386,7 @@ class UserWeatherPages(webapp.RequestHandler):
 				self.response.out.write(text2)
 				
 		self.response.out.write(weather.foot)
+		self.response.out.write(main_.trackingScript)
 		self.response.out.write(u'<body></html>')
 			
 		return
