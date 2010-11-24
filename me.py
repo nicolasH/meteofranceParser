@@ -3,6 +3,7 @@ from google.appengine.ext.webapp.util import run_wsgi_app
 from google.appengine.api import users
 from google.appengine.ext import db
 from google.appengine.api import urlfetch
+from google.appengine.api import memcache
 
 import re
 import cgi
@@ -184,16 +185,24 @@ class SingleWeatherPage(webapp.RequestHandler):
 
 	def get(self):
 		self.response.headers['Content-Type'] = 'text/html; charset=UTF-8'
-		self.response.out.write(u"<html><head>"+weather.head+"</head><body>")
+		
 		city_asked = cgi.escape(self.request.path[7:])
 		city_code = cityCodeFromString(city_asked)
 		if(len(city_code)==0):
 			self.response.out.write("ha HA! nice try.")
 			return
 		#self.response.out.write("city code = "+city_code)
+		content = memcache.get(city_code)
+		if(content is not None):
+			self.response.out.write(u"<html><head>"+weather.head+"</head><body>")
+			self.response.out.write(content)
+			self.response.out.write(weather.foot)
+			self.response.out.write(main_.trackingScript)
+			self.response.out.write(u'<body></html>')
+			return
 
 		dico = {}
-
+		
 		if city_code[0:3]== "fr_":
 			dico["domain"] = domainFrance
 			dico["suffix"] = suffixFrance + city_code[3:9]
@@ -214,8 +223,11 @@ class SingleWeatherPage(webapp.RequestHandler):
 		outText = u''.join(list)
 		text = outText.encode("iso-8859-1")
 		text2= db.Text(text, encoding="UTF-8")
-		self.response.out.write(text2)
 		
+		memcache.set(city_code,text2,3600)
+		
+		self.response.out.write(u"<html><head>"+weather.head+"</head><body>")
+		self.response.out.write(text2)		
 		self.response.out.write(weather.foot)
 		self.response.out.write(main_.trackingScript)
 		self.response.out.write(u'<body></html>')

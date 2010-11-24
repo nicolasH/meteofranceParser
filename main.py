@@ -3,7 +3,7 @@ from google.appengine.ext.webapp.util import run_wsgi_app
 from google.appengine.api import urlfetch
 from google.appengine.ext import db
 from datetime import datetime, date, time,timedelta
-
+from google.appengine.api import memcache
 import weather
 
 trackingScript = u"""
@@ -21,11 +21,6 @@ trackingScript = u"""
 
 </script>"""
 
-class CityStore(db.Model):
-	cityKey = db.StringProperty()
-	content = db.TextProperty()
-	dateFetch = db.DateTimeProperty(auto_now_add=True)
-
 class MainPage(webapp.RequestHandler):
     def get(self):
         #user = users.get_current_user()
@@ -34,10 +29,9 @@ class MainPage(webapp.RequestHandler):
 		if len(self.request.path)>1 :
 			page = self.request.path[1:]
 			if page in infos :
-				lastPages = db.GqlQuery("SELECT * FROM CityStore WHERE cityKey = :1",page)
-				lastPages.fetch(1)
-				if lastPages.count() > 0 and (datetime.now() - lastPages[0].dateFetch)< timedelta(minutes=59):
-					self.response.out.write(lastPages[0].content)
+				content = memcache.get(page)
+				if(content is not None):
+					self.response.out.write(content)
 					return
 				dico = infos[page]
 				fullPage = result = urlfetch.fetch(url=(dico["domain"]+dico["suffix"]))
@@ -51,11 +45,8 @@ class MainPage(webapp.RequestHandler):
 				#list = weather.parseMeteoPage(dico,fullPage.content,trackingScript)
 				outText = u''.join(list)
 				text = outText.encode("iso-8859-1")
-				cityS = CityStore(key_name=page)
-				cityS.content = db.Text(text, encoding="utf-8")
-				cityS.cityKey = page
 				self.response.out.write(text)
-				cityS.put()
+				memcache.set(page,text,3600)
 				return
         
 		indexStrings= weather.generateIndex(infos,False,trackingScript)
