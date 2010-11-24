@@ -233,7 +233,7 @@ class UserWeatherPagesManager(webapp.RequestHandler):
 		possibleID=""
 		if(city_asked != None):
 			key = cityCodeFromString(city_asked)
-			if(key.len ==0):
+			if(None == key or len(key)==0):
 				self.response.out.write("ha HA! nice try.")
 				return
 
