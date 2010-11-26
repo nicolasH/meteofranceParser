@@ -2,12 +2,13 @@ from google.appengine.ext import webapp
 from google.appengine.ext.webapp.util import run_wsgi_app
 from google.appengine.api import users
 from google.appengine.ext import db
-from google.appengine.api import urlfetch
 from google.appengine.api import memcache
 
 import re
 import cgi
 import weather
+import URLOpener
+
 import main as main_
 
 class CityInfo(db.Model):
@@ -210,8 +211,8 @@ class SingleWeatherPage(webapp.RequestHandler):
 		if city_code[0:3]== "mo_":
 			dico["domain"] = domainMonde
 			dico["suffix"] = suffixMonde + city_code[3:8]
-		
-		fullPage = urlfetch.fetch(url=(dico["domain"]+dico["suffix"]))
+		opener = URLOpener.URLOpener()
+		fullPage = opener.open(dico["domain"]+dico["suffix"])
 		list =[]
 		if("PREVISIONS_PORTLET" in dico["suffix"]):
 			#France web page layout is very different
@@ -325,7 +326,8 @@ class UserSetupPage(webapp.RequestHandler):
 			url = baseMonde + url
 			
 		text = "Adding this : "
-		result = urlfetch.fetch(url)
+		opener = URLOpener.URLOpener()
+		result = opener.open(url)
 		key = ''
 		if res[0]:
 			cityName = weather.getCityNameFrance(result.content)
@@ -380,8 +382,9 @@ class UserWeatherPages(webapp.RequestHandler):
 				dico["suffix"] = suffixMonde+ city.cityPage
 			dicos.append(dico)
 		
+		opener = URLOpener.URLOpener()
 		for dico in dicos:
-			fullPage = urlfetch.fetch(url=(dico["domain"]+dico["suffix"]))
+			fullPage = opener.open(url=(dico["domain"]+dico["suffix"]))
 			if("PREVISIONS_PORTLET" in dico["suffix"]):
 				#France web page layout is very different
 				list = weather.getWeatherContentHTML_france(dico,fullPage.content)
@@ -412,7 +415,8 @@ application = webapp.WSGIApplication(
                                      debug=True)
 
 def main():
-    run_wsgi_app(application)
+	opener=URLOpener.URLOpener()
+	run_wsgi_app(application)
 
 if __name__ == "__main__":
     main()

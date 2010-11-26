@@ -5,6 +5,7 @@ from google.appengine.ext import db
 from datetime import datetime, date, time,timedelta
 from google.appengine.api import memcache
 import weather
+import URLOpener
 
 trackingScript = u"""
 <script type="text/javascript">
@@ -23,8 +24,13 @@ trackingScript = u"""
 
 class MainPage(webapp.RequestHandler):
     def get(self):
+    	
         #user = users.get_current_user()
 		self.response.headers['Content-Type'] = 'text/html'
+		opener = URLOpener.URLOpener()
+		#self.response.out.write(opener.open("http://france.meteofrance.com/france/meteo?PREVISIONS_PORTLET.path=previsionsville/013130").content)
+		#return
+		#self.response.out.write()
 		infos = weather.getInfos()
 		if len(self.request.path)>1 :
 			page = self.request.path[1:]
@@ -34,7 +40,8 @@ class MainPage(webapp.RequestHandler):
 					self.response.out.write(content)
 					return
 				dico = infos[page]
-				fullPage = result = urlfetch.fetch(url=(dico["domain"]+dico["suffix"]))
+				fullPage = result = opener.open(dico["domain"]+dico["suffix"])
+				#urlfetch.fetch(url=(dico["domain"]+dico["suffix"]))
 				list =""
 				if("monde" in dico["domain"]):
 					list = weather.parseMeteoPage(dico,fullPage.content,trackingScript)
