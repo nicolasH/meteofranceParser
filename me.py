@@ -25,81 +25,12 @@ class UserAccount(db.Model):
 	userNick = db.StringProperty()
 	private = db.BooleanProperty()
 
+scriptImport = """
+<script src="/js/scripts.js"></script>
+"""
+
+##DEBUG
 scriptBaseString="""
-	 <script language="javascript">
-	function getRequest(){
-		var xhr; 
-    	try {  
-    		xhr = new ActiveXObject('Msxml2.XMLHTTP');
-    	}catch (e) {
-        	try {   
-        		xhr = new ActiveXObject('Microsoft.XMLHTTP');
-        	}catch (e2) {
-				try {  
-					xhr = new XMLHttpRequest();
-          		}catch (e3) {  xhr = false;   }
-        	}
-     	}
-     	return xhr;
-     	}
-
-	function asyncEdit(cityID,action){
-		var xhr =getRequest();
- 		var elementID='item_'+cityID;
-    	xhr.onreadystatechange  = function(test){ 
-			if(xhr.readyState  == 4){
-        		if(xhr.status  == 200) {
-        			item = document.getElementById(elementID);
-        			if(action=="enlever"){
-        				document.getElementById("list_enlever").removeChild(item);
-           				document.getElementById("list_ajouter").appendChild(item);
-           				document.getElementById("action_"+cityID).value="ajouter";
-          				document.getElementById("action_"+cityID).onclick = function(){asyncEdit(cityID,'ajouter')};
-        			}
-        			if(action=="ajouter"){
-        				document.getElementById("list_ajouter").removeChild(item);
-           				document.getElementById("list_enlever").appendChild(item);
-           				document.getElementById("action_"+cityID).value="enlever";
-        				document.getElementById("action_"+cityID).onclick = function(){asyncEdit(cityID,'enlever')};
-         			}
-        	    } else {
-        	         document.getElementById('ajax').value="Error code " + xhr.status;
-        	    }
-        	 }
-    	}; 
-
-   		xhr.open("GET", "/manage?which_city="+cityID+"&action="+action,  true); 
-   		xhr.send(null);
-						
-	}
-
-	function asyncNewCity(){
-		var http = getRequest();
-
-		http.onreadystatechange  = function(){ 
-			if(http.readyState  == 4){
-        		if(http.status  == 200) {
-     	         	document.getElementById('ajax').value=http.responseText;
-     	         	node = document.createElement('li');
-     	         	li = eval('(' + http.responseText + ')');
-       				node.innerHTML = li.content;
-       				node.id = li.id;
-       				document.getElementById("list_enlever").appendChild(node);
-        	    } else {
-        	         document.getElementById('ajax').value="Error code " + http.status + " " +http.responseText;
-        	    }
-        	 }
-    	};
-		var test = document.getElementById("urlField").value;
- 		var url="url="+test;
- 		http.open("POST", "/me",  true); 
-   		http.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
-		http.setRequestHeader("Content-length", url.length);
-		http.setRequestHeader("Connection", "close");
-   		http.send(url);
-						
-	}
-</script>
 <textarea id="ajax" ></textarea>
 """
 
@@ -126,6 +57,7 @@ actionURL='/manage'
 actionAdd = 'ajouter'
 actionRemove = 'enlever'
 whichID = 'which_city'
+
 def urlCode(url):
 	if url[0:len(baseFrance)] == baseFrance and len(url) < len(baseFrance) +7 :
 		return [True,url[len(baseFrance):]]		
@@ -139,26 +71,44 @@ def urlFromCode(isFrench,code):
 	else:
 		return baseMonde+code
 
+def urlFromCityKey(cityKey):
+	if cityKey[:2] == "fr" :
+		return baseFrance+cityKey[3:]
+	else:
+		return baseMonde+cityKey[3:]
+
+	
 def cityCodeFromString(city_asked):
-	regex = re.compile("([fr_|mo_]+)(\d+)")
+	"""
+	expecting a string of the format fr_123456 or fr/123456
+	will return a city_key which is of the form fr_123456 or mo_12345 
+	"""
+	regex = re.compile("([fr|mo]+)[\/|_](\d+)")
 	rez = regex.search(city_asked)
 	r = rez.groups()
 	key=""
-	if len(r)!=2 or (r[0]!="fr_" and r[0]!="mo_"):
+	if len(r)!=2 or (r[0]!="fr" and r[0]!="mo"):
 		return ""
 	#key=""
-	if r[0]== "fr_":
-		key= r[0] + r[1][0:6]
-	if r[0]== "mo_":
-		key= r[0] + r[1][0:5]
+	if r[0]== "fr":
+		key= r[0] +"_"+ r[1][0:6]
+	if r[0]== "mo":
+		key= r[0] +"_"+ r[1][0:5]
 	return key
+
+def thereURL(city):
+	if city.cityIsFrench:
+		return "there/fr/"+city.cityPage
+	else:
+		return "there/mo/"+city.cityPage
 
 def cityLIcontent(city,form_id):
 	city_key = city.key().name()
 	key = city_key+"_"+form_id
 	list =[]
+	list.append("<a href='"+thereURL(city)+"'>")
 	list.append(city.cityName)
-	
+	list.append("</a>")	
 	if city.cityIsFrench :
 		list.append(", france.")
 	else:
@@ -183,7 +133,9 @@ def knownCitiesDIV(cities,excepted,title,form_id):
 
 
 class SingleWeatherPage(webapp.RequestHandler):
-
+	"""
+	Handles the /there/* urls. Will fetch the forecast on the fly if url is possible and not already memcached.
+	"""
 	def get(self):
 		self.response.headers['Content-Type'] = 'text/html; charset=UTF-8'
 		
@@ -194,10 +146,16 @@ class SingleWeatherPage(webapp.RequestHandler):
 			return
 		#self.response.out.write("city code = "+city_code)
 		content = memcache.get(city_code)
+		
+		regexTitle=re.compile("<h1>([^<]*)</h1>.*")
+		
 		if(content is not None):
-			self.response.out.write(u"<html><head>"+weather.head+"</head><body>")
+			rez = regexTitle.search(content)
+			title = "<title>"+rez.groups()[0]+"</title>"
+			self.response.out.write(u"<html><head>"+weather.head+title+"</head><body>")
 			self.response.out.write(content)
 			self.response.out.write(weather.foot)
+			self.response.out.write(main_.extraCredits)
 			self.response.out.write(main_.trackingScript)
 			self.response.out.write(u'<body></html>')
 			return
@@ -225,12 +183,21 @@ class SingleWeatherPage(webapp.RequestHandler):
 		text = outText.encode("iso-8859-1")
 		text2= db.Text(text, encoding="UTF-8")
 		
+		rez = regexTitle.search(text2)
+		title = "<title>"+rez.groups()[0]+"</title>"
+		
 		memcache.set(city_code,text2,3600)
 		
-		self.response.out.write(u"<html><head>"+weather.head+"</head><body>")
+		self.response.out.write(u"<html><head>"+weather.head+title+"</head><body>")
 		self.response.out.write(text2)		
 		self.response.out.write(weather.foot)
+		if users.get_current_user() is not None:
+			self.response.out.write('<a href="/me">Aller a vos pages</a>')
+		else:
+			self.response.out.write('Vous pouvez <a href="/me">creer un compte</a> et y enregistrer vos villes favorites.')
+		self.response.out.write(main_.extraCredits)
 		self.response.out.write(main_.trackingScript)
+			
 		self.response.out.write(u'<body></html>')
 		return
 
@@ -264,7 +231,9 @@ class UserWeatherPagesManager(webapp.RequestHandler):
 		return		
 			
 class UserSetupPage(webapp.RequestHandler):
-	
+	"""
+	The "home" page for each user.
+	"""
 	def get(self):
 		#self.response.headers['Content-Type'] = 'text/html; charset=iso-8859-1'
 		self.response.headers['Content-Type'] = 'text/html; charset=UTF-8'
@@ -275,8 +244,8 @@ class UserSetupPage(webapp.RequestHandler):
 		account.private= False
 		account.get_or_insert(key_name=user.user_id())
 
-		self.response.out.write("<html><head>"+weather.head+"</head><body>")
-		
+		self.response.out.write("<html><head>"+weather.head+scriptImport+"</head><body>")
+		##DEBUG
 		self.response.out.write(scriptBaseString)
 		self.response.out.write("<div class=\"me\">")
 		self.response.out.write("<h1>Welcome "+user.nickname()+"</h1>")
@@ -294,7 +263,7 @@ class UserSetupPage(webapp.RequestHandler):
 				
 		divTitle =""
 		if(len(personnalCities)>0):
-			divTitle= u'Mes Villes (<a href="/mine">Pr&eacute;visions</a>) :'
+			divTitle= u'Vos Villes (<a href="/mine">Pr&eacute;visions</a>) :'
 		else:
 			divTitle=u'Vous devriez ajouter des villes'
 
@@ -356,53 +325,50 @@ class UserSetupPage(webapp.RequestHandler):
 		self.response.out.write('{"id":"item_'+key+'","content":"'+cityLIcontent(city,"enlever").replace('"','\\"')+'"}')
 
 class UserWeatherPages(webapp.RequestHandler):
-	
+	"""
+	The forecast for each city the user has saved the url.
+	-> this might time out if there are too many cities as app engine has a 30 seconds request limit.
+	"""
 	def get(self):
 		self.response.headers['Content-Type'] = 'text/html'
 		userID = users.get_current_user().user_id()
 
 		self.response.out.write(u"<html><head>"+weather.head+"</head><body>")
-		self.response.out.write(u'<div class="content"><h1> Mes Pr&eacute;visions:</h1></div>')
+		self.response.out.write(u'<div class="content"><h1> Vos Pr&eacute;visions:</h1></div>')
 
 		myCities = db.GqlQuery("SELECT * FROM MyCities WHERE userID = :1",userID)
-		#NOT OPTIMAL
-		personnalCities = []
-		for mine in myCities:
-			#Never removing a city, are we ?
-			personnalCities.append(CityInfo.get_by_key_name(mine.cityKey))
-		
-		dicos = []
-		for city in personnalCities:
-			dico = {}
-			if city.cityIsFrench :
-				dico["domain"] = domainFrance
-				dico["suffix"] = suffixFrance + city.cityPage
-			else:
-				dico["domain"] = domainMonde
-				dico["suffix"] = suffixMonde+ city.cityPage
-			dicos.append(dico)
-		
+
 		opener = URLOpener.URLOpener()
-		for dico in dicos:
-			fullPage = opener.open(url=(dico["domain"]+dico["suffix"]))
-			if("PREVISIONS_PORTLET" in dico["suffix"]):
-				#France web page layout is very different
-				list = weather.getWeatherContentHTML_france(dico,fullPage.content)
-				outText = u''.join(list)
-				text = outText.encode("iso-8859-1")
-				text2= db.Text(text, encoding="UTF-8")
-				self.response.out.write(text2)
+			
+		for mine in myCities:
+			content = memcache.get(mine.cityKey)
+			if content is not None:
+				self.response.out.write(content)
 			else:
-				#Monde web page layout is very different
-				list = weather.getWeatherContentHTML_monde(dico,fullPage.content)
+				cityUrl = urlFromCityKey(mine.cityKey)
+				fullPage = opener.open(url=cityUrl)#(dico["domain"]+dico["suffix"]))
+				dico={}
+				list=[]
+				if mine.cityKey[:2]=="fr":
+					dico["domain"] = domainFrance
+					dico["suffix"] = suffixFrance + mine.cityKey[3:]
+					list = weather.getWeatherContentHTML_france(dico,fullPage.content)
+				if mine.cityKey[:2]=="mo":
+					dico["domain"] = domainMonde
+					dico["suffix"] = suffixMonde + mine.cityKey[3:]
+					list = weather.getWeatherContentHTML_monde(dico,fullPage.content)
+	
 				outText = u''.join(list)
 				text = outText.encode("iso-8859-1")
 				text2= db.Text(text, encoding="UTF-8")
+				memcache.set(mine.cityKey,text2,3600)
 				self.response.out.write(text2)
-				
 		self.response.out.write(weather.foot)
+		self.response.out.write(main_.extraCredits)
 		self.response.out.write(main_.trackingScript)
 		self.response.out.write(u'<body></html>')
+		return
+
 			
 		return
 	

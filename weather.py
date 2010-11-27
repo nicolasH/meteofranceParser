@@ -399,7 +399,7 @@ def getWeatherContentHTML_france(dico,content):
 			tendanceLine = parsePeriod(tendance[0])
 			list.extend(tendanceLine)
 
-	list.append(u"</table>\n")
+	list.append(u"</table>\n</div>")
 	return list
 	
 def parseMeteoPageFrance(dico,content,tracking=""):
