@@ -19,7 +19,7 @@ h3 {
 	font-style: italic;
 }
 
-.content {
+div.content , div.extra_credits, div.footer{
 	width: 320px;
 	background: white;
 	padding: 1ex;

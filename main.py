@@ -8,7 +8,7 @@ import weather
 import URLOpener
 
 extraCredits="""
-<div class="extra_credits">Code source de ce site est  
+<div class="extra_credits">Le code source de ce site est  
 <a href="http://www.github.com/nicolasH/meteofranceParser/">disponible sur github</a>.
 </div>
 """

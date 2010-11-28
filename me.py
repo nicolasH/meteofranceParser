@@ -243,12 +243,13 @@ class UserSetupPage(webapp.RequestHandler):
 		account.userNick = user.nickname()
 		account.private= False
 		account.get_or_insert(key_name=user.user_id())
-
-		self.response.out.write("<html><head>"+weather.head+scriptImport+"</head><body>")
+		title="me-teo : accueil - choisissez vos villes favorites."
+		title="<title>"+title+"</title>"
+		self.response.out.write("<html><head>"+weather.head+scriptImport+title+"</head><body>")
 		##DEBUG
 		self.response.out.write(scriptBaseString)
 		self.response.out.write("<div class=\"me\">")
-		self.response.out.write("<h1>Welcome "+user.nickname()+"</h1>")
+		self.response.out.write("<h1>Bienvenu "+user.nickname()+"</h1>")
 
 		self.response.out.write(urlForm)
 
@@ -332,8 +333,9 @@ class UserWeatherPages(webapp.RequestHandler):
 	def get(self):
 		self.response.headers['Content-Type'] = 'text/html'
 		userID = users.get_current_user().user_id()
-
-		self.response.out.write(u"<html><head>"+weather.head+"</head><body>")
+		title="Les pr&eacute;visions m&eacute;t&eacute;o de vos villes."
+		title="<title>"+title+"</title>"
+		self.response.out.write(u"<html><head>"+weather.head+title+"</head><body>")
 		self.response.out.write(u'<div class="content"><h1> Vos Pr&eacute;visions:</h1></div>')
 
 		myCities = db.GqlQuery("SELECT * FROM MyCities WHERE userID = :1",userID)
@@ -364,6 +366,7 @@ class UserWeatherPages(webapp.RequestHandler):
 				memcache.set(mine.cityKey,text2,3600)
 				self.response.out.write(text2)
 		self.response.out.write(weather.foot)
+		self.response.out.write("""<div class="footer">Vous pouvez choisir quelles ville(s) apparaissent sur cette page <a href="/me">sur votre page d'accueil</a></div>""")
 		self.response.out.write(main_.extraCredits)
 		self.response.out.write(main_.trackingScript)
 		self.response.out.write(u'<body></html>')
