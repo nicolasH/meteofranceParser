@@ -50,7 +50,7 @@
 		http.onreadystatechange  = function(){ 
 			if(http.readyState  == 4){
         		if(http.status  == 200) {
-     	         	document.getElementById('ajax').value=http.responseText;
+     	         	/*document.getElementById('ajax').value=http.responseText;*/
      	         	node = document.createElement('li');
      	         	li = eval('(' + http.responseText + ')');
        				node.innerHTML = li.content;

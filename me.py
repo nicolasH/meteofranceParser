@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from google.appengine.ext import webapp
 from google.appengine.ext.webapp.util import run_wsgi_app
 from google.appengine.api import users
@@ -38,7 +39,7 @@ urlForm = """
 	<div class="submitURL">
 	<!--form class="submitCityURL" action="" method="post"-->
 		<div class="submitTitle" >Ajoutez l'url d'une ville de <a href="http://france.meteofrance.com" >France</a> ou "<a href="http://monde.meteofrance.com/monde/previsions" >du Monde</a>":</div>
-		<div class="urlField" ><input   id="urlField" name="url" ></div>
+		<div class="urlField" ><input id="urlField" name="url" ></div>
 		<div class="urlSubmit" ><input type="button" value="Ajouter" onclick="asyncNewCity();" /></div>
 	<!--/form-->
 	</div>
@@ -142,7 +143,7 @@ class SingleWeatherPage(webapp.RequestHandler):
 		city_asked = cgi.escape(self.request.path[7:])
 		city_code = cityCodeFromString(city_asked)
 		if(len(city_code)==0):
-			self.response.out.write("ha HA! nice try.")
+			self.response.out.write("sorry, unrecognized city.")
 			return
 		#self.response.out.write("city code = "+city_code)
 		content = memcache.get(city_code)
@@ -247,9 +248,9 @@ class UserSetupPage(webapp.RequestHandler):
 		title="<title>"+title+"</title>"
 		self.response.out.write("<html><head>"+weather.head+scriptImport+title+"</head><body>")
 		##DEBUG
-		self.response.out.write(scriptBaseString)
+		#self.response.out.write(scriptBaseString)
 		self.response.out.write("<div class=\"me\">")
-		self.response.out.write("<h1>Bienvenu "+user.nickname()+"</h1>")
+		self.response.out.write("<h1>Bienvenue "+user.nickname()+"</h1>")
 
 		self.response.out.write(urlForm)
 
@@ -299,18 +300,19 @@ class UserSetupPage(webapp.RequestHandler):
 		opener = URLOpener.URLOpener()
 		result = opener.open(url)
 		key = ''
-		if res[0]:
-			cityName = weather.getCityNameFrance(result.content)
+                if res[0]:
+			tmp = weather.getCityNameFrance(result.content)
+                        tmp = tmp.encode('iso-8859-1')
+                        cityName = unicode(tmp,'utf-8')
 			text += "[french, "+cityName+", "+res[1]+"]"
 			key='fr_'+res[1]
 		else:
-			cityName = weather.getCityNameMonde(result.content)
+			tmp = u''+weather.getCityNameMonde(result.content)
+                        tmp = tmp.encode('iso-8859-1')
+                        cityName = unicode(tmp,'utf-8')
 			text += "[world, "+cityName+", "+res[1]+"]"
 			key='mo_'+res[1]
-			
-		#self.response.out.write(text)
 		
-		cityName = u'' + cityName
 		
 		city = CityInfo(key_name=key)
 		city.cityIsFrench = res[0]

@@ -35,8 +35,8 @@ timeFormat = "%Y/%m/%d &agrave; %H:%M:%S "
 def getCityNameFrance(content):
 	cityInfosFilter = SoupStrainer('div',{'class':'choix'})
 	otherSoup=BeautifulSoup(content,parseOnlyThese=cityInfosFilter)
-	infosPage = otherSoup("p",text=True)
-	return infosPage[0]
+        infosPage = otherSoup("p",text=True)
+	return infosPage[0].parent.text
 
 def getCityNameMonde(content):
 	cityInfosFilter = SoupStrainer('div',{'class':'infos'})

@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from google.appengine.ext import webapp
 from google.appengine.ext.webapp.util import run_wsgi_app
 from google.appengine.api import urlfetch
@@ -6,6 +7,7 @@ from datetime import datetime, date, time,timedelta
 from google.appengine.api import memcache
 import weather
 import URLOpener
+import logging
 
 extraCredits="""
 <div class="extra_credits">Le code source de ce site est  
@@ -68,6 +70,7 @@ application = webapp.WSGIApplication(
                                      debug=True)
 
 def main():
+    logging.getLogger().setLevel(logging.DEBUG)
     run_wsgi_app(application)
 
 if __name__ == "__main__":
