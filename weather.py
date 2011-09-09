@@ -1,14 +1,17 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 from BeautifulSoup import BeautifulSoup , SoupStrainer
+from cookielib import CookieJar
+from datetime import datetime, date, time
+
 import re
 import urllib2
+import urllib
 import codecs
 import sys
 import copy
 import string
 
-from datetime import datetime, date, time
 
 ###########
 
@@ -347,22 +350,18 @@ def getWeatherContentHTML_france(dico,content):
 	list.append(u"<h3>"+lastUpdate+"</h3>")
 	list.append(u"<table>")
 
-	# current format in july-august / 2010
-	# summaries in divs
-	#				id -> jour0, jour1, jour2 
-	#			 class -> "jour show_first" then "jour"
-	# daily forecast in divs 
-	#				id -> blockDetails0, blockDetails1, blockDetails2
-	#			 class -> bloc_details
-	# day sub forecast in div
-	#			 class -> echeance
-	#
-	# tendances in ul
-	# 				id -> "suivants "
-	#			 class -> listeJoursLE
-	# 		class (li) -> lijourle0,lijourle1,lijourle2,lijourle3 ... 5
-	
-	#print "yaaaaaaa"
+      	# current format in september 2011
+	# summaries
+        # ul: class=clearBoth
+        #    li class = jour selected
+        #       dl
+        #         dt $day
+        #         dd class="picTemps J_W1_0-N_0" title="$weather">Soleil</dd>
+        #         -> day summary gets its weather picture from a sprite sheet via CSS
+        #         dd class="minmax"
+        #         dd class="UV"
+        #         dd class="vents"
+        #         dd class="vents">
 	# daily summaries
 	for i in range(4):
 		id = 'jour'+str(i)
@@ -475,10 +474,10 @@ def getInfos():
 	return infos
 
 
-def getContent(dico):
-	resp = urllib2.urlopen(dico["domain"]+dico["suffix"])
-	return resp.read()
-
+def getContent(opener,dico):
+        response = opener.open("http://france.meteofrance.com/france/meteo?PREVISIONS_PORTLET.path=previsionsville/013130")
+        result = opener.open(dico["domain"]+dico["suffix"]).read()
+        return result
 
 def writeFile(fileName,contentList):
 	fileOut = open(base_dir+fileName,'w')
@@ -492,12 +491,13 @@ def main():
 	import time
 	#get the files informations
 	infos = getInfos()
-	
+        cj = CookieJar()
+        opener = urllib2.build_opener(urllib2.HTTPCookieProcessor(cj))
 	if len(sys.argv)>1 and sys.argv[1] in infos:
 		page = sys.argv[1]
 		dico = infos[page]
 
-		content= getContent(dico)
+		content= getContent(opener,dico)
 		if("monde" in dico["domain"]):
 			list = parseMeteoPage(dico,content)
 		else:
@@ -515,7 +515,7 @@ def main():
 	while 1:
 		try:
 			for name,dico in infos.iteritems():
-				content= getContent(dico)
+				content= getContent(opener,dico)
 				list = ""
 				if("monde" in dico["domain"]):
 					list = parseMeteoPage(dico,content)
