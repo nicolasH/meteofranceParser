@@ -112,6 +112,7 @@ def parseAndDisplay(period,line,domain):
 
 
 ###########
+
 def getWeatherContentHTML_monde(dico,content):
 	domain = dico["domain"]
 	suffix = dico["suffix"]	
@@ -316,6 +317,66 @@ def parsePeriod(soup):
 	
 	return periodLine	
 
+class PeriodWeather(object):
+        def __init__(self, periodSoup):
+                ps = periodSoup
+
+                self.period_name = ps('dt')[0].contents
+
+                self.weather = ps('dd')[0].img['alt']
+                self.weather_img = ps('dd')[0].img['src']
+                
+                print self.weather, self.weather_img
+                # Contains non ascii char
+                self.t = ps('dd')[1].contents[0] 
+                self.t_r = ps('dd')[2].strong.contents[0] # ressentie
+
+                print self.t, self.t_r
+
+                # wind
+                self.wind_dir_img= ps('dd')[3].span['class']
+                self.wind_dir= ps('dd')[3].span['title']
+                self.wind_speed = ps('dd')[3].strong.contents[0]
+                # rafales
+                self.wind_burst= ps('dd')[4].strong.contents[0]
+                print self.wind_dir_img, self.wind_dir, self.wind_speed, self.wind_burst
+
+class DayWeather(object):
+        def __init__(self, periodSoup):
+                ps = periodSoup
+
+                self.period_name = ps('dt')[0].contents
+
+                self.weather = ps('dd')[0]['title']
+                self.weather_img = ps('dd')[0]['class']
+                
+                
+                print self.weather, self.weather_img
+                # Contains non ascii char
+                self.t_min = ps('dd')[1].contents[0].contents[0]
+                self.t_max = ps('dd')[1].contents[2].contents[0]
+
+                print self.t_min, self.t_max
+
+                # wind
+                self.wind_dir_img= ps('dd')[3].span['class']
+                self.wind_dir= ps('dd')[3].span['title']
+                self.wind_speed = ps('dd')[3].strong.contents[0]
+                # rafales
+                self.wind_burst= ps('dd')[4].strong.contents[0]
+                print self.wind_dir_img, self.wind_dir, self.wind_speed, self.wind_burst
+                self.details = []
+                div = ps('dd')[5].contents[2].contents[0]
+                for n in div:
+                        print n.contents[0]('dd')
+                        print type(n.contents[0])
+#                periods = SoupStrainer('dl',{'class':''})
+ #               gazpacho = BeautifulSoup(n, parseOnlyThese=periods)
+  #              for item in gazpacho.contents:
+   #                     print item
+        
+
+
 
 def getWeatherContentHTML_france(dico,content):
 	domain = dico["domain"]
@@ -358,11 +419,32 @@ def getWeatherContentHTML_france(dico,content):
         #         dt $day
         #         dd class="picTemps J_W1_0-N_0" title="$weather">Soleil</dd>
         #         -> day summary gets its weather picture from a sprite sheet via CSS
-        #         dd class="minmax"
-        #         dd class="UV"
-        #         dd class="vents"
-        #         dd class="vents">
+        #         dd - min | max
+        #         dd - UV
+        #         dd - vents
+        #         dd - detail
+        #       ...............
+        #           dl
+        #             dt $day
+        #             dd img src="" title = "$weather"
+        #             dd - temp
+        #             dd - temp ressentie
+        #             dd - UV
+        #             dd - vents
 	# daily summaries
+        daySummarylinks = SoupStrainer('dl',{'class':None})
+        soup = BeautifulSoup(content, parseOnlyThese=daySummarylinks)
+        for item in soup.contents:
+                day = DayWeather(item)
+                print '##############################'
+                print '%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%'
+                periods = SoupStrainer('dl',{'class':''})
+                gazpacho = BeautifulSoup(item.parent.contents[0], parseOnlyThese=periods)
+                print '@@@@@@@@@@@@@@@@'
+                print gazpacho
+                
+                
+        return []
 	for i in range(4):
 		id = 'jour'+str(i)
 		links = SoupStrainer('div',{'id':id})
@@ -434,8 +516,7 @@ def parseMeteoPageFrance(dico,content,tracking=""):
 	list.append(u"<div class=\"nav\">Retourner &agrave <a href=\"/\">la liste des villes</a></div>\n")
 	list.append(tracking)
 	list.append("</body>\n</html>")
-	return list
-
+	return list        
 
 def getSourceSentence(sourceUrl,pageName):
 	return u"<div class=\"source\">Les informations sur cette page proviennent de la page de pr&eacute;visions de <a href=\""+sourceUrl+"\">M&eacute;t&eacute;o-France pour "+pageName+"</a>.</div>\n"
@@ -497,7 +578,8 @@ def main():
 		page = sys.argv[1]
 		dico = infos[page]
 
-		content= getContent(opener,dico)
+		#content= getContent(opener,dico)
+                content= ''.join(open('meteo.html','r').readlines())
 		if("monde" in dico["domain"]):
 			list = parseMeteoPage(dico,content)
 		else:
