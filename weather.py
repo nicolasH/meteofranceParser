@@ -318,29 +318,53 @@ def parsePeriod(soup):
 	return periodLine	
 
 class PeriodWeather(object):
-        def __init__(self, periodSoup):
-                ps = periodSoup
-
-                self.period_name = ps('dt')[0].contents
-
-                self.weather = ps('dd')[0].img['alt']
-                self.weather_img = ps('dd')[0].img['src']
+        def __init__(self, spoon):
+                sp = spoon.contents
                 
-                print self.weather, self.weather_img
+                self.period_name = sp[0].contents[0]
+                
+                self.weather = sp[1].img['title']
+                self.weather_img = sp[1].img['src']
+                
                 # Contains non ascii char
-                self.t = ps('dd')[1].contents[0] 
-                self.t_r = ps('dd')[2].strong.contents[0] # ressentie
-
-                print self.t, self.t_r
+                self.t = sp[2].contents[0]
+                self.t_r = sp[3].strong.contents[0] # ressentie
 
                 # wind
-                self.wind_dir_img= ps('dd')[3].span['class']
-                self.wind_dir= ps('dd')[3].span['title']
-                self.wind_speed = ps('dd')[3].strong.contents[0]
+                self.wind_dir_img= sp[4].span['class']
+                self.wind_dir= sp[4].span['title']
+                self.wind_speed = sp[4].strong.contents[0]
                 # rafales
-                self.wind_burst= ps('dd')[4].strong.contents[0]
-                print self.wind_dir_img, self.wind_dir, self.wind_speed, self.wind_burst
+                self.wind_burst= sp[5].strong.contents[0]
 
+        def toHTML(self):
+                list=[u'']
+
+                classLine="period"
+                TD=u'</td>\n\t<td class="'+classLine+'">'
+                RTD=u'</td>\n\t<td class="'+classLine+'" align="right">'
+	#http://france.meteofrance.com/meteo/pictos/web/SITE/16/sud-sud-ouest.gif
+	#http://france.meteofrance.com/meteo/pictos/web/SITE/30/32_c.gif
+	# I prefer smaller icons
+                weatherImg = weatherImg.replace("CARTE/40","SITE/30")
+                weatherImg = weatherImg.replace("SITE/40","SITE/30")
+                weatherImg = weatherImg.replace("SITE/80","SITE/30")
+	
+	
+                list.append(u'<tr class="'+classLine+'">\n\t')
+                list.append(u'<td class="'+classLine+'1">')
+                list.append(self.period_name)
+                list.append(TD+'<img src="'+imgDomainMobile+weatherImg+'" width="30" height="30" ')
+                list.append(u' alt="' + self.weather + u'" title="'+ self.weather+u'" />' + RTD )
+                list.append(self.t)
+		list.append(TD + self.wind_dir +RTD)
+		list.append(windSpeed)
+		list.append(RTD)
+		list.append(windM)
+
+                list.append(u"</td>\n</tr>\n")
+                return list
+	        
 class DayWeather(object):
         def __init__(self, periodSoup):
                 ps = periodSoup
@@ -350,13 +374,9 @@ class DayWeather(object):
                 self.weather = ps('dd')[0]['title']
                 self.weather_img = ps('dd')[0]['class']
                 
-                
-                print self.weather, self.weather_img
                 # Contains non ascii char
                 self.t_min = ps('dd')[1].contents[0].contents[0]
                 self.t_max = ps('dd')[1].contents[2].contents[0]
-
-                print self.t_min, self.t_max
 
                 # wind
                 self.wind_dir_img= ps('dd')[3].span['class']
@@ -364,18 +384,42 @@ class DayWeather(object):
                 self.wind_speed = ps('dd')[3].strong.contents[0]
                 # rafales
                 self.wind_burst= ps('dd')[4].strong.contents[0]
-                print self.wind_dir_img, self.wind_dir, self.wind_speed, self.wind_burst
-                self.details = []
-                div = ps('dd')[5].contents[2].contents[0]
-                for n in div:
-                        print n.contents[0]('dd')
-                        print type(n.contents[0])
-#                periods = SoupStrainer('dl',{'class':''})
- #               gazpacho = BeautifulSoup(n, parseOnlyThese=periods)
-  #              for item in gazpacho.contents:
-   #                     print item
-        
 
+                self.details = []
+                ul = ps('dd')[5].contents[2]
+                content = str(ul.contents[0])
+                periodSummarylinks = SoupStrainer('dl',{'class':''})
+                soup = BeautifulSoup(content, parseOnlyThese=periodSummarylinks)
+                for spoonful in soup:
+                        self.details.append(PeriodWeather(spoonful))
+                        
+        def toHTML(self):
+                list=[u'']
+
+                classLine="day"
+                TD=u'</td>\n\t<td class="'+classLine+'">'
+                RTD=u'</td>\n\t<td class="'+classLine+'" align="right">'
+	#http://france.meteofrance.com/meteo/pictos/web/SITE/16/sud-sud-ouest.gif
+	#http://france.meteofrance.com/meteo/pictos/web/SITE/30/32_c.gif
+	# I prefer smaller icons
+                weatherImg = weatherImg.replace("CARTE/40","SITE/30")
+                weatherImg = weatherImg.replace("SITE/40","SITE/30")
+                weatherImg = weatherImg.replace("SITE/80","SITE/30")
+	
+	
+                list.append(u'<tr class="'+classLine+'">\n\t')
+                list.append(u'<td class="'+classLine+'1">')
+                list.append(self.period_name)
+                list.append(TD+'<img src="'+imgDomainMobile+weatherImg+'" width="30" height="30" ')
+                list.append(u' alt="' + self.weather + u'" title="'+ self.weather+u'" />' + RTD )
+                list.append(self.t)
+		list.append(TD + self.wind_dir +RTD)
+		list.append(windSpeed)
+		list.append(RTD)
+		list.append(windM)
+
+                list.append(u"</td>\n</tr>\n")
+                return list
 
 
 def getWeatherContentHTML_france(dico,content):
@@ -434,39 +478,11 @@ def getWeatherContentHTML_france(dico,content):
 	# daily summaries
         daySummarylinks = SoupStrainer('dl',{'class':None})
         soup = BeautifulSoup(content, parseOnlyThese=daySummarylinks)
+        
         for item in soup.contents:
                 day = DayWeather(item)
-                print '##############################'
-                print '%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%'
-                periods = SoupStrainer('dl',{'class':''})
-                gazpacho = BeautifulSoup(item.parent.contents[0], parseOnlyThese=periods)
-                print '@@@@@@@@@@@@@@@@'
-                print gazpacho
-                
-                
-        return []
-	for i in range(4):
-		id = 'jour'+str(i)
-		links = SoupStrainer('div',{'id':id})
-		soup= BeautifulSoup(content, parseOnlyThese=links)
-
-		if(len(soup)==0):
-			continue
-
-		periodLine = parsePeriod(soup)
-		list.extend(periodLine)
-
-		detailsId = 'blocDetails'+str(i)
-		links = SoupStrainer('div',{'id':detailsId})
-		soup= BeautifulSoup(content, parseOnlyThese=links)
-
-		if(len(soup)==0):
-			continue
-
-		for echeance in soup('div',{'class':'echeance'}):
-			periodLine = parsePeriod(echeance)			
-			list.extend(periodLine)
-
+                list.append(renderDayWeather(day))
+        
 	links = SoupStrainer('ul',{'id':'listeJoursLE'})
 	soup= BeautifulSoup(content, parseOnlyThese=links)
 
