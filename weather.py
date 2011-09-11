@@ -12,6 +12,7 @@ import sys
 import copy
 import string
 
+import WeatherForecast
 
 ###########
 
@@ -25,11 +26,11 @@ imgDomainMobile = "http://mobile.meteofrance.com/"
 head = u"""
 	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
 	<meta name="viewport" content="width=350, user-scalable=yes">
-	<link rel="stylesheet" href="/css/weather.css" type="text/css" />
+	<link rel="stylesheet" href="css/weather.css" type="text/css" />
 """
 foot =u"""
 	<div class="footer">
-		Les pr&eacute;visions m&eacute;t&eacute;o sont extraites du site de M&eacute;t&eacute;o-France. Elles sont reproduites en accord avec les informations pr&eacute;sentes sur la page concernant les <a href="http://france.meteofrance.com/france/accueil/informations_publiques">informations publiques</a>.
+		le pr&eacute;visions m&eacute;t&eacute;o sont extraites du site de M&eacute;t&eacute;o-France. Elles sont reproduites en accord avec les informations pr&eacute;sentes sur la page concernant les <a href="http://france.meteofrance.com/france/accueil/informations_publiques">informations publiques</a>.
 	</div>
 """
 #timeFormat = "%A %d %B %Y - %H:%M:%S " 
@@ -317,110 +318,6 @@ def parsePeriod(soup):
 	
 	return periodLine	
 
-class PeriodWeather(object):
-        def __init__(self, spoon):
-                sp = spoon.contents
-                
-                self.period_name = sp[0].contents[0]
-                
-                self.weather = sp[1].img['title']
-                self.weather_img = sp[1].img['src']
-                
-                # Contains non ascii char
-                self.t = sp[2].contents[0]
-                self.t_r = sp[3].strong.contents[0] # ressentie
-
-                # wind
-                self.wind_dir_img= sp[4].span['class']
-                self.wind_dir= sp[4].span['title']
-                self.wind_speed = sp[4].strong.contents[0]
-                # rafales
-                self.wind_burst= sp[5].strong.contents[0]
-
-        def toHTML(self):
-                list=[u'']
-
-                classLine="period"
-                TD=u'</td>\n\t<td class="'+classLine+'">'
-                RTD=u'</td>\n\t<td class="'+classLine+'" align="right">'
-	#http://france.meteofrance.com/meteo/pictos/web/SITE/16/sud-sud-ouest.gif
-	#http://france.meteofrance.com/meteo/pictos/web/SITE/30/32_c.gif
-	# I prefer smaller icons
-                weatherImg = weatherImg.replace("CARTE/40","SITE/30")
-                weatherImg = weatherImg.replace("SITE/40","SITE/30")
-                weatherImg = weatherImg.replace("SITE/80","SITE/30")
-	
-	
-                list.append(u'<tr class="'+classLine+'">\n\t')
-                list.append(u'<td class="'+classLine+'1">')
-                list.append(self.period_name)
-                list.append(TD+'<img src="'+imgDomainMobile+weatherImg+'" width="30" height="30" ')
-                list.append(u' alt="' + self.weather + u'" title="'+ self.weather+u'" />' + RTD )
-                list.append(self.t)
-		list.append(TD + self.wind_dir +RTD)
-		list.append(windSpeed)
-		list.append(RTD)
-		list.append(windM)
-
-                list.append(u"</td>\n</tr>\n")
-                return list
-	        
-class DayWeather(object):
-        def __init__(self, periodSoup):
-                ps = periodSoup
-
-                self.period_name = ps('dt')[0].contents
-
-                self.weather = ps('dd')[0]['title']
-                self.weather_img = ps('dd')[0]['class']
-                
-                # Contains non ascii char
-                self.t_min = ps('dd')[1].contents[0].contents[0]
-                self.t_max = ps('dd')[1].contents[2].contents[0]
-
-                # wind
-                self.wind_dir_img= ps('dd')[3].span['class']
-                self.wind_dir= ps('dd')[3].span['title']
-                self.wind_speed = ps('dd')[3].strong.contents[0]
-                # rafales
-                self.wind_burst= ps('dd')[4].strong.contents[0]
-
-                self.details = []
-                ul = ps('dd')[5].contents[2]
-                content = str(ul.contents[0])
-                periodSummarylinks = SoupStrainer('dl',{'class':''})
-                soup = BeautifulSoup(content, parseOnlyThese=periodSummarylinks)
-                for spoonful in soup:
-                        self.details.append(PeriodWeather(spoonful))
-                        
-        def toHTML(self):
-                list=[u'']
-
-                classLine="day"
-                TD=u'</td>\n\t<td class="'+classLine+'">'
-                RTD=u'</td>\n\t<td class="'+classLine+'" align="right">'
-	#http://france.meteofrance.com/meteo/pictos/web/SITE/16/sud-sud-ouest.gif
-	#http://france.meteofrance.com/meteo/pictos/web/SITE/30/32_c.gif
-	# I prefer smaller icons
-                weatherImg = weatherImg.replace("CARTE/40","SITE/30")
-                weatherImg = weatherImg.replace("SITE/40","SITE/30")
-                weatherImg = weatherImg.replace("SITE/80","SITE/30")
-	
-	
-                list.append(u'<tr class="'+classLine+'">\n\t')
-                list.append(u'<td class="'+classLine+'1">')
-                list.append(self.period_name)
-                list.append(TD+'<img src="'+imgDomainMobile+weatherImg+'" width="30" height="30" ')
-                list.append(u' alt="' + self.weather + u'" title="'+ self.weather+u'" />' + RTD )
-                list.append(self.t)
-		list.append(TD + self.wind_dir +RTD)
-		list.append(windSpeed)
-		list.append(RTD)
-		list.append(windM)
-
-                list.append(u"</td>\n</tr>\n")
-                return list
-
 
 def getWeatherContentHTML_france(dico,content):
 	domain = dico["domain"]
@@ -455,34 +352,17 @@ def getWeatherContentHTML_france(dico,content):
 	list.append(u"<h3>"+lastUpdate+"</h3>")
 	list.append(u"<table>")
 
-      	# current format in september 2011
-	# summaries
-        # ul: class=clearBoth
-        #    li class = jour selected
-        #       dl
-        #         dt $day
-        #         dd class="picTemps J_W1_0-N_0" title="$weather">Soleil</dd>
-        #         -> day summary gets its weather picture from a sprite sheet via CSS
-        #         dd - min | max
-        #         dd - UV
-        #         dd - vents
-        #         dd - detail
-        #       ...............
-        #           dl
-        #             dt $day
-        #             dd img src="" title = "$weather"
-        #             dd - temp
-        #             dd - temp ressentie
-        #             dd - UV
-        #             dd - vents
+
 	# daily summaries
         daySummarylinks = SoupStrainer('dl',{'class':None})
         soup = BeautifulSoup(content, parseOnlyThese=daySummarylinks)
         
         for item in soup.contents:
-                day = DayWeather(item)
-                list.append(renderDayWeather(day))
+                day = WeatherForecast.WeatherForecast()
+                day.loadFrenchDay(item)
+                list.extend(day.toHTML())
         
+        #print u''.join(list)
 	links = SoupStrainer('ul',{'id':'listeJoursLE'})
 	soup= BeautifulSoup(content, parseOnlyThese=links)
 

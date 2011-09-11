@@ -1,4 +1,15 @@
+# -*- coding: utf-8 -*-
+from BeautifulSoup import BeautifulSoup , SoupStrainer
+import string
+import codecs
 
+import re
+import urllib2
+import urllib
+import codecs
+import sys
+import copy
+import string
 imgDomainMobile = "http://mobile.meteofrance.com/"
 class WeatherForecast(object):
 
@@ -21,16 +32,21 @@ class WeatherForecast(object):
         # rafales
         self.wind_burst = None
         
+        self.details = None
+        
     def loadFrenchPeriod(self, spoon):
         sp = spoon.contents
         self.forecast_name = sp[0].contents[0]
-        
+
         self.weather = sp[1].img['title']
         self.weather_img = sp[1].img['src']
                 
         # Contains non ascii char
-        self.t_day = sp[2].contents[0]
-        self.t_felt = sp[3].strong.contents[0] # ressentie
+        self.t_day = sp[2].contents[0].__str__('utf-8')
+        self.t_day = unicode(self.t_day,'iso-8859-1')
+
+        self.t_felt = sp[3].strong.contents[0].__str__('utf-8')
+        self.t_felt = unicode(self.t_felt,'iso-8859-1') # ressentie
         
         # wind
         self.wind_dir_img= sp[4].span['class']
@@ -38,19 +54,21 @@ class WeatherForecast(object):
         self.wind_speed = sp[4].strong.contents[0]
         # rafales
         self.wind_burst= sp[5].strong.contents[0]
-        return self
+
 
     def loadFrenchDay(self,soup):
-        ps = periodSoup
+        ps = soup
         
-        self.period_name = ps('dt')[0].contents
+        self.forecast_name = ps('dt')[0].contents[0]
         
         self.weather = ps('dd')[0]['title']
         self.weather_img = ps('dd')[0]['class']
         
         # Contains non ascii char
-        self.t_min = ps('dd')[1].contents[0].contents[0]#min
-        self.t_max = ps('dd')[1].contents[2].contents[0]#max
+        self.t_min = ps('dd')[1].contents[0].contents[0].__str__('utf-8')
+        self.t_min = unicode(self.t_min,'iso-8859-1')#min
+        self.t_max = ps('dd')[1].contents[2].contents[0].__str__('utf-8')
+        self.t_max = unicode(self.t_max,'iso-8859-1')#max
 
         # wind
         self.wind_dir_img= ps('dd')[3].span['class']
@@ -65,35 +83,41 @@ class WeatherForecast(object):
         periodSummarylinks = SoupStrainer('dl',{'class':''})
         soup = BeautifulSoup(content, parseOnlyThese=periodSummarylinks)
         for spoonful in soup:
-            self.details.append(WeatherForecast().loadFrenchPeriod(spoonful))
-
-        return self
+            p_forecast = WeatherForecast()
+            self.details.append(p_forecast)
+            p_forecast.loadFrenchPeriod(spoonful)
 
         
     def toHTML(self):
 	list=[u'']
-        
-	weather = unicode.strip(self.weather)
+        fc = self.forecast_name.__str__('utf-8')
+        fc = unicode(fc,'iso-8859-1')
+
+        weather = self.weather
+        weather = weather.encode('utf-8')
+        weather = unicode(weather,'iso-8859-1')
+
+        #print weather, type(weather)
 	weather_img = unicode.strip(self.weather_img)
 	
 	wind_dir = unicode.strip(self.wind_dir)
 	wind_dir_img = unicode.strip(self.wind_dir_img)
-	wind_speed = unicode.strip(self.wind_speed)[3:]
-        wind_busrt = self.wind_burst
+	wind_speed = unicode.strip(self.wind_speed)
+        wind_burst = self.wind_burst
 	if wind_burst is None:
-            wind_burst = '-'
+            wind_burst = '&emdash;'
         else:
             wind_burst = unicode.strip(wind_burst)
 
         classline=u''
-        if(t_min is not None and t_max is not None):
-            t_a = unicode.strip(t_min)
-            t_b = unicode.strip(t_max)
-            classLine="day"
+        if(self.t_min is not None and self.t_max is not None):
+            t_a = unicode.strip(self.t_min)
+            t_b = unicode.strip(self.t_max)
+            classline="day"
         else:
-            classLine="period"
-            t_a = unicode.strip(t_day)
-            t_b = unicode.strip(t_felt)
+            classline="period"
+            t_a = unicode.strip(self.t_day)
+            t_b = unicode.strip(self.t_felt)
 
             
 	#http://france.meteofrance.com/meteo/pictos/web/SITE/16/sud-sud-ouest.gif
@@ -108,7 +132,7 @@ class WeatherForecast(object):
 	
 	list.append(u'<tr class="'+classline+'">\n\t')
 	list.append(u'<td class="'+classline+'1">')
-	list.append(self.forecast_name)
+	list.append(u''+fc)
 	list.append(TD+'<img src="'+imgDomainMobile+weather_img+'" width="30" height="30" ')
 	list.append(u' alt="')
 	list.append(weather)
@@ -116,7 +140,7 @@ class WeatherForecast(object):
 	list.append(weather)
 	list.append(u'" />' + RTD )
 	list.append(t_a + ' | '+t_b)
-	if(len(windImg)>0):
+	if(len(wind_dir_img)>0):
 		list.append(TD + u'<img src="'+imgDomainMobile+wind_dir_img+'"')
 		list.append(u' width="16" height="16" alt="')
 		list.append(wind_dir)
@@ -132,5 +156,9 @@ class WeatherForecast(object):
 		list.append(RTD)
 
 	list.append(u"</td>\n</tr>\n")
+
+        if self.details is not None:
+            for detail in self.details:
+                list.extend(detail.toHTML())
 	return list
 
