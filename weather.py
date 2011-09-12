@@ -373,9 +373,9 @@ def getWeatherContentHTML_france(dico,content):
 		tendance = soup('li',{'class':'lijourle'+str(n)})
 		#print tendance
 		if(len(tendance) >0):
-			tendanceLine = parsePeriod(tendance[0])
-			list.extend(tendanceLine)
-
+                        tend = WeatherForecast.WeatherForecast()
+                        tend.loadFrenchTendance(tendance[0])
+                        list.extend(tend.toHTML())
 	list.append(u"</table>\n</div>")
 	return list
 	

@@ -19,6 +19,8 @@ class WeatherForecast(object):
         self.weather = None
         self.weather_img = None
 
+        self.UV = None
+
         self.t_min = None
         self.t_max = None
 
@@ -34,6 +36,48 @@ class WeatherForecast(object):
         
         self.details = None
         
+    def loadFrenchTendance(self, soup):
+        #sp = spoon.contents
+        print soup
+        ##################################
+	line = soup("strong")
+	self.forecast_name = line[0].contents[0]#date
+	self.UV = u''
+	if len(line)>1 and len(line[1].contents)>0:
+		self.UV=line[1].contents[0]
+	# Temperature
+	line = soup("em")
+        t = line[0].contents[0]
+	self.t_min = t.split('/')[0]
+	self.t_max = t.split('/')[1]
+        # Wind
+	line = soup("p")
+	if(len(line)>1):
+		self.wind_dir = line[1].img['alt']
+		self.wind_dir_img = line[1].img['src']
+		self.wind_speed = line[1].span.contents[0]
+
+	line = soup("span")
+	if(len(line)>2):
+		self.wind_burst = line[2].contents[0]
+	#weather
+	line = soup("div")
+	if t.find("/")>0 :
+		if(self.wind_dir is not None):
+			# a daily summary
+			self.weather = line[2].img['alt']
+			self.wather_img = line[2].img['src']
+		else:
+			#a fareway forecast
+			self.weather = line[0].img['alt']
+			self.weather_img = line[0].img['src']
+	else:
+		self.weather = line[0].img['alt']
+		self.weather_img = line[0].img['src']
+
+##################################
+
+
     def loadFrenchPeriod(self, spoon):
         sp = spoon.contents
         self.forecast_name = sp[0].contents[0]
@@ -99,11 +143,18 @@ class WeatherForecast(object):
 
         #print weather, type(weather)
 	weather_img = unicode.strip(self.weather_img)
-	
-	wind_dir = unicode.strip(self.wind_dir)
-	wind_dir_img = unicode.strip(self.wind_dir_img)
-	wind_speed = unicode.strip(self.wind_speed)
+        wind_dir = wind_dir_img = wind_speed = u''
+	if self.wind_dir is not None:
+            wind_dir = unicode.strip(self.wind_dir)
+            wind_dir_img = unicode.strip(self.wind_dir_img)
+            wind_speed = unicode.strip(self.wind_speed)
+        else:
+            wind_dir = '&emdash;'
+            wind_dir_img = ''
+            wind_speed = '&emdash;'
+        
         wind_burst = self.wind_burst
+
 	if wind_burst is None:
             wind_burst = '&emdash;'
         else:
