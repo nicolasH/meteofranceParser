@@ -52,8 +52,8 @@ class WeatherForecast(object):
 
 	# Temperature
 	line = soup("em")
-        t = line[0].contents[0].__str__('utf-8')
-        t = unicode(t,'iso-8859-1')#min
+        t = line[0].contents[0]#.__str__('utf-8')
+        #t = unicode(t,'iso-8859-1')#min
 	self.t_min = t.split('/')[0]
 	self.t_max = t.split('/')[1]
 
@@ -71,11 +71,11 @@ class WeatherForecast(object):
         self.weather_img = sp[1].img['src']
                 
         # Contains non ascii char
-        self.t_day = sp[2].contents[0].__str__('utf-8')
-        self.t_day = unicode(self.t_day,'iso-8859-1')
+        self.t_day = sp[2].contents[0]#.__str__('utf-8')
+        #self.t_day = unicode(self.t_day,'iso-8859-1')
 
-        self.t_felt = sp[3].strong.contents[0].__str__('utf-8')
-        self.t_felt = unicode(self.t_felt,'iso-8859-1') # ressentie
+        self.t_felt = sp[3].strong.contents[0]#.__str__('utf-8')
+        #self.t_felt = unicode(self.t_felt,'iso-8859-1') # ressentie
         
         # wind
         self.wind_dir_img= sp[4].span['class']
@@ -94,10 +94,10 @@ class WeatherForecast(object):
         self.weather_img = ps('dd')[0]['class']
         
         # Contains non ascii char
-        self.t_min = ps('dd')[1].contents[0].contents[0].__str__('utf-8')
-        self.t_min = unicode(self.t_min,'iso-8859-1')#min
-        self.t_max = ps('dd')[1].contents[2].contents[0].__str__('utf-8')
-        self.t_max = unicode(self.t_max,'iso-8859-1')#max
+        self.t_min = ps('dd')[1].contents[0].contents[0]#.__str__('utf-8')
+        #self.t_min = unicode(self.t_min,'iso-8859-1')#min
+        self.t_max = ps('dd')[1].contents[2].contents[0]#.__str__('utf-8')
+        #self.t_max = unicode(self.t_max,'iso-8859-1')#max
 
         # wind
         self.wind_dir_img= ps('dd')[3].span['class']
@@ -119,12 +119,12 @@ class WeatherForecast(object):
         
     def toHTML(self):
 	list=[u'']
-        fc = self.forecast_name.__str__('utf-8')
-        fc = unicode(fc,'iso-8859-1')
+        fc = self.forecast_name#.__str__('utf-8')
+        #fc = unicode(fc,'iso-8859-1')
 
         weather = self.weather
-        weather = weather.encode('utf-8')
-        weather = unicode(weather,'iso-8859-1')
+        #weather = weather.encode('utf-8')
+        #weather = unicode(weather,'iso-8859-1')
 
         #print weather, type(weather)
 	weather_img = unicode.strip(self.weather_img)
