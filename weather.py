@@ -474,8 +474,8 @@ def main():
 		page = sys.argv[1]
 		dico = infos[page]
 
-		#content= getContent(opener,dico)
-                content= ''.join(open('meteo.html','r').readlines())
+		content= getContent(opener,dico)
+                #content= ''.join(open('meteo.html','r').readlines())
 		if("monde" in dico["domain"]):
 			list = parseMeteoPage(dico,content)
 		else:

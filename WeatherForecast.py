@@ -37,43 +37,28 @@ class WeatherForecast(object):
         self.details = None
         
     def loadFrenchTendance(self, soup):
-        #sp = spoon.contents
-        print soup
-        ##################################
+
 	line = soup("strong")
-	self.forecast_name = line[0].contents[0]#date
+	# Day
+        self.forecast_name = line[0].contents[0]#date
 	self.UV = u''
 	if len(line)>1 and len(line[1].contents)>0:
 		self.UV=line[1].contents[0]
+	# Weather
+	line = soup("div")
+        #a fareway forecast
+        self.weather = line[0].img['alt']
+        self.weather_img = line[0].img['src']
+
 	# Temperature
 	line = soup("em")
-        t = line[0].contents[0]
+        t = line[0].contents[0].__str__('utf-8')
+        t = unicode(t,'iso-8859-1')#min
 	self.t_min = t.split('/')[0]
 	self.t_max = t.split('/')[1]
-        # Wind
-	line = soup("p")
-	if(len(line)>1):
-		self.wind_dir = line[1].img['alt']
-		self.wind_dir_img = line[1].img['src']
-		self.wind_speed = line[1].span.contents[0]
 
-	line = soup("span")
-	if(len(line)>2):
-		self.wind_burst = line[2].contents[0]
-	#weather
-	line = soup("div")
-	if t.find("/")>0 :
-		if(self.wind_dir is not None):
-			# a daily summary
-			self.weather = line[2].img['alt']
-			self.wather_img = line[2].img['src']
-		else:
-			#a fareway forecast
-			self.weather = line[0].img['alt']
-			self.weather_img = line[0].img['src']
-	else:
-		self.weather = line[0].img['alt']
-		self.weather_img = line[0].img['src']
+        # Wind: no wind
+        
 
 ##################################
 
@@ -161,36 +146,48 @@ class WeatherForecast(object):
             wind_burst = unicode.strip(wind_burst)
 
         classline=u''
+        t_sep = u'/'
         if(self.t_min is not None and self.t_max is not None):
+            classline="day"
             t_a = unicode.strip(self.t_min)
             t_b = unicode.strip(self.t_max)
-            classline="day"
+            t_sep = u' / '
         else:
             classline="period"
             t_a = unicode.strip(self.t_day)
             t_b = unicode.strip(self.t_felt)
+            t_sep = u' ~ '
 
-            
+        #wind
 	#http://france.meteofrance.com/meteo/pictos/web/SITE/16/sud-sud-ouest.gif
-	#http://france.meteofrance.com/meteo/pictos/web/SITE/30/32_c.gif
+	#weather
+        #http://france.meteofrance.com/meteo/pictos/web/SITE/30/32_c.gif
+        
+            
+        #from meteofrance
+        #http://france.meteofrance.com/meteo/pictos/web/SITE/40/0_a.gif
+        #from my page - wrong
+        #http://mobile.meteofrance.com/meteo_files/0_a_002.gif
 	# I prefer smaller icons
+        print self.weather_img
+        #http://france.meteofrance.com/meteo/pictos/web/SITE/40/7_a.gif
 	weatherImg = self.weather_img.replace("CARTE/40","SITE/30")
 	weatherImg = weatherImg.replace("SITE/40","SITE/30")
-	weatherImg = weatherImg.replace("SITE/80","SITE/30")
-	
+	weatherImg = weatherImg.replace("SITE/80/","SITE/30/")
+	print weatherImg
 	TD=u'</td>\n\t<td class="'+classline+'">'
 	RTD=u'</td>\n\t<td class="'+classline+'" align="right">'
 	
 	list.append(u'<tr class="'+classline+'">\n\t')
 	list.append(u'<td class="'+classline+'1">')
 	list.append(u''+fc)
-	list.append(TD+'<img src="'+imgDomainMobile+weather_img+'" width="30" height="30" ')
+	list.append(TD+'<img src="'+imgDomainMobile+weatherImg+'" width="30" height="30" ')
 	list.append(u' alt="')
 	list.append(weather)
 	list.append(u'" title="')
 	list.append(weather)
 	list.append(u'" />' + RTD )
-	list.append(t_a + ' | '+t_b)
+	list.append(t_a + t_sep + t_b)
 	if(len(wind_dir_img)>0):
 		list.append(TD + u'<img src="'+imgDomainMobile+wind_dir_img+'"')
 		list.append(u' width="16" height="16" alt="')
