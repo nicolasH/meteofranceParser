@@ -35,7 +35,9 @@ class WeatherForecast(object):
         self.wind_burst = None
         
         self.details = None
-        
+
+##################################
+
     def loadFrenchTendance(self, soup):
 
 	line = soup("strong")
@@ -52,16 +54,13 @@ class WeatherForecast(object):
 
 	# Temperature
 	line = soup("em")
-        t = line[0].contents[0]#.__str__('utf-8')
-        #t = unicode(t,'iso-8859-1')#min
+        t = line[0].contents[0]
 	self.t_min = t.split('/')[0]
 	self.t_max = t.split('/')[1]
 
         # Wind: no wind
-        
 
 ##################################
-
 
     def loadFrenchPeriod(self, spoon):
         sp = spoon.contents
@@ -71,11 +70,9 @@ class WeatherForecast(object):
         self.weather_img = sp[1].img['src']
                 
         # Contains non ascii char
-        self.t_day = sp[2].contents[0]#.__str__('utf-8')
-        #self.t_day = unicode(self.t_day,'iso-8859-1')
+        self.t_day = sp[2].contents[0]
 
-        self.t_felt = sp[3].strong.contents[0]#.__str__('utf-8')
-        #self.t_felt = unicode(self.t_felt,'iso-8859-1') # ressentie
+        self.t_felt = sp[3].strong.contents[0]
         
         # wind
         self.wind_dir_img= sp[4].span['class']
@@ -84,6 +81,8 @@ class WeatherForecast(object):
         # rafales
         self.wind_burst= sp[5].strong.contents[0]
 
+
+##################################
 
     def loadFrenchDay(self,soup):
         ps = soup
@@ -94,10 +93,8 @@ class WeatherForecast(object):
         self.weather_img = ps('dd')[0]['class']
         
         # Contains non ascii char
-        self.t_min = ps('dd')[1].contents[0].contents[0]#.__str__('utf-8')
-        #self.t_min = unicode(self.t_min,'iso-8859-1')#min
-        self.t_max = ps('dd')[1].contents[2].contents[0]#.__str__('utf-8')
-        #self.t_max = unicode(self.t_max,'iso-8859-1')#max
+        self.t_min = ps('dd')[1].contents[0].contents[0]
+        self.t_max = ps('dd')[1].contents[2].contents[0]
 
         # wind
         self.wind_dir_img= ps('dd')[3].span['class']
@@ -116,17 +113,63 @@ class WeatherForecast(object):
             self.details.append(p_forecast)
             p_forecast.loadFrenchPeriod(spoonful)
 
+###################################
+    def loadWorldPeriod(self, spoon):
+        sp = spoon.contents
+        self.forecast_name = sp[0].contents[0]
+
+        self.weather = sp[1].img['title']
+        self.weather_img = sp[1].img['src']
+                
+        # Contains non ascii char
+        self.t_day = sp[2].contents[0]
+
+        self.t_felt = sp[3].strong.contents[0]
+        
+        # wind
+        self.wind_dir_img= sp[4].span['class']
+        self.wind_dir= sp[4].span['title']
+        self.wind_speed = sp[4].strong.contents[0]
+        # rafales
+        self.wind_burst= sp[5].strong.contents[0]
+
+
+    ##################################
+
+    def loadWorldDay(self,soup):
+        # used for the stuff in the names.txt
+        line = soup 
+        ###############################
+	weather = line.contents[2]
+        self.forecast_name = '-'
+        a_tag = str(line.contents[1].contents[0])
+        a_tag = re.search('\>([\w]+)\<',a_tag).group(1)
+        self.forecast_name = a_tag
+
+	###########################
+	self.t_min = weather.contents[1].split('/')[0]
+	self.t_max = weather.contents[1].split('/')[1]
+	self.weather = weather.img['alt']
+	self.weather_img = weather.img['src']
+	###########################
+	wind = line.contents[3]
+	i = wind.contents[0]
+	self.wind_speed = wind.contents[1]
+	self.wind_dir = wind.img['title']
+	self.wind_dir_img = wind.img['src']
+	###########################
+	rafales = line.contents[4]
+	self.wind_burst=rafales.contents[0]
+	###########################	
+
+#####################################
         
     def toHTML(self):
 	list=[u'']
-        fc = self.forecast_name#.__str__('utf-8')
-        #fc = unicode(fc,'iso-8859-1')
-
+        fc = self.forecast_name
+        
         weather = self.weather
-        #weather = weather.encode('utf-8')
-        #weather = unicode(weather,'iso-8859-1')
-
-        #print weather, type(weather)
+        
 	weather_img = unicode.strip(self.weather_img)
         wind_dir = wind_dir_img = wind_speed = u''
 	if self.wind_dir is not None:
@@ -158,23 +201,10 @@ class WeatherForecast(object):
             t_b = unicode.strip(self.t_felt)
             t_sep = u' ~ '
 
-        #wind
-	#http://france.meteofrance.com/meteo/pictos/web/SITE/16/sud-sud-ouest.gif
-	#weather
-        #http://france.meteofrance.com/meteo/pictos/web/SITE/30/32_c.gif
-        
-            
-        #from meteofrance
-        #http://france.meteofrance.com/meteo/pictos/web/SITE/40/0_a.gif
-        #from my page - wrong
-        #http://mobile.meteofrance.com/meteo_files/0_a_002.gif
-	# I prefer smaller icons
-        print self.weather_img
-        #http://france.meteofrance.com/meteo/pictos/web/SITE/40/7_a.gif
 	weatherImg = self.weather_img.replace("CARTE/40","SITE/30")
 	weatherImg = weatherImg.replace("SITE/40","SITE/30")
 	weatherImg = weatherImg.replace("SITE/80/","SITE/30/")
-	print weatherImg
+	#print weatherImg
 	TD=u'</td>\n\t<td class="'+classline+'">'
 	RTD=u'</td>\n\t<td class="'+classline+'" align="right">'
 	

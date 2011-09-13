@@ -26,7 +26,7 @@ imgDomainMobile = "http://mobile.meteofrance.com/"
 head = u"""
 	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
 	<meta name="viewport" content="width=350, user-scalable=yes">
-	<link rel="stylesheet" href="css/weather.css" type="text/css" />
+	<link rel="stylesheet" href="/css/weather.css" type="text/css" />
 """
 foot =u"""
 	<div class="footer">
@@ -50,6 +50,7 @@ def getCityNameMonde(content):
 	
 ###########
 def parseAndDisplay(period,line,domain):
+        #print "######### Parse and Display ############"
 	list=[u'']
 	weather = line.contents[2]
 	###########################
@@ -168,8 +169,12 @@ def getWeatherContentHTML_monde(dico,content):
 				if len(weather.contents)==0:
 					#for the first line
 					continue
-				periodLine = parseAndDisplay("# "+sDay,line,domain)
-				list.extend(periodLine)
+                                day = WeatherForecast.WeatherForecast()
+                                day.loadWorldDay(line)
+                                #periodLine = parseAndDisplay("# "+sDay,line,domain)
+				#list.extend(periodLine)
+                                #print "#### odd ###"
+                                list.extend(day.toHTML())
 				continue
 		###########################
 		## morning, afternoon etc ...
@@ -179,6 +184,7 @@ def getWeatherContentHTML_monde(dico,content):
 		period=period.contents[0]
 		############################
 		## render
+                #print "### Render ###"
 		periodLine = parseAndDisplay(period,line,domain)
 		list.extend(periodLine)
 	
