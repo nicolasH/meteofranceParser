@@ -30,7 +30,7 @@ head = u"""
 """
 foot =u"""
 	<div class="footer">
-		le pr&eacute;visions m&eacute;t&eacute;o sont extraites du site de M&eacute;t&eacute;o-France. Elles sont reproduites en accord avec les informations pr&eacute;sentes sur la page concernant les <a href="http://france.meteofrance.com/france/accueil/informations_publiques">informations publiques</a>.
+		Les pr&eacute;visions m&eacute;t&eacute;o sont extraites du site de M&eacute;t&eacute;o-France. Elles sont reproduites en accord avec les informations pr&eacute;sentes sur la page concernant les <a href="http://france.meteofrance.com/france/accueil/informations_publiques">informations publiques</a>.
 	</div>
 """
 #timeFormat = "%A %d %B %Y - %H:%M:%S " 

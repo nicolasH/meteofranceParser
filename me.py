@@ -156,6 +156,10 @@ class SingleWeatherPage(webapp.RequestHandler):
 			self.response.out.write(u"<html><head>"+weather.head+title+"</head><body>")
 			self.response.out.write(content)
 			self.response.out.write(weather.foot)
+                        if users.get_current_user() is not None:
+                                self.response.out.write('<div class="nav"><a href="/me">Aller a vos pages</a></div>')
+                        else:
+                                self.response.out.write('<div class="nav">Vous pouvez <a href="/me">creer un compte</a> et y enregistrer vos villes favorites.</div>')
 			self.response.out.write(main_.extraCredits)
 			self.response.out.write(main_.trackingScript)
 			self.response.out.write(u'<body></html>')
@@ -193,9 +197,9 @@ class SingleWeatherPage(webapp.RequestHandler):
 		self.response.out.write(text2)		
 		self.response.out.write(weather.foot)
 		if users.get_current_user() is not None:
-			self.response.out.write('<a href="/me">Aller a vos pages</a>')
+			self.response.out.write('<div class="nav"><a href="/me">Aller a vos pages</a></div>')
 		else:
-			self.response.out.write('Vous pouvez <a href="/me">creer un compte</a> et y enregistrer vos villes favorites.')
+			self.response.out.write('<div class="nav">Vous pouvez <a href="/me">creer un compte</a> et y enregistrer vos villes favorites.</div>')
 		self.response.out.write(main_.extraCredits)
 		self.response.out.write(main_.trackingScript)
 			
