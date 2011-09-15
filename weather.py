@@ -160,9 +160,13 @@ def getWeatherContentHTML_monde(dico,content):
 		if(line.__dict__['attrs'] != None and len(line.__dict__['attrs'])>0 ):
 			s = str(line.attrs[0][1]).decode('iso-8859-1')
 			n= s.find(" ")
+                        
 			if n>=0:
-				if day!=s[:n] :
-					day=s[:n]
+                                day = WeatherForecast.WeatherForecast()
+                                day.loadWorldPeriod(line)
+                                list.extend(day.toHTML())
+
+
 			else:#summary of that day or empty line?
 				sDay=s
 				weather = line.contents[2]
@@ -171,22 +175,8 @@ def getWeatherContentHTML_monde(dico,content):
 					continue
                                 day = WeatherForecast.WeatherForecast()
                                 day.loadWorldDay(line)
-                                #periodLine = parseAndDisplay("# "+sDay,line,domain)
-				#list.extend(periodLine)
-                                #print "#### odd ###"
                                 list.extend(day.toHTML())
-				continue
-		###########################
-		## morning, afternoon etc ...
-		period=line.contents[1]
-		if len(period)==0:
-			continue
-		period=period.contents[0]
-		############################
-		## render
-                #print "### Render ###"
-		periodLine = parseAndDisplay(period,line,domain)
-		list.extend(periodLine)
+
 	
 	list.append(u"</table>\n<div>\n")
 	return list

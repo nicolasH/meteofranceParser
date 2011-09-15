@@ -114,24 +114,31 @@ class WeatherForecast(object):
             p_forecast.loadFrenchPeriod(spoonful)
 
 ###################################
-    def loadWorldPeriod(self, spoon):
-        sp = spoon.contents
-        self.forecast_name = sp[0].contents[0]
-
-        self.weather = sp[1].img['title']
-        self.weather_img = sp[1].img['src']
-                
-        # Contains non ascii char
-        self.t_day = sp[2].contents[0]
-
-        self.t_felt = sp[3].strong.contents[0]
+    def loadWorldPeriod(self,soup):
+        # used for the stuff in the names.txt
+        line = soup 
+        ###############################
+	weather = line.contents[2]
+        self.forecast_name = line.contents[1].contents[0]
         
-        # wind
-        self.wind_dir_img= sp[4].span['class']
-        self.wind_dir= sp[4].span['title']
-        self.wind_speed = sp[4].strong.contents[0]
-        # rafales
-        self.wind_burst= sp[5].strong.contents[0]
+        #a_tag = str(line.contents[1].contents[0])
+        #a_tag = re.search('\>([\w]+)\<',a_tag).group(1)
+        #self.forecast_name = a_tag
+
+	###########################
+	self.t_day = weather.contents[1]
+	self.weather = weather.img['alt']
+	self.weather_img = weather.img['src']
+	###########################
+	wind = line.contents[3]
+	i = wind.contents[0]
+	self.wind_speed = wind.contents[1]
+	self.wind_dir = wind.img['title']
+	self.wind_dir_img = wind.img['src']
+	###########################
+	rafales = line.contents[4]
+	self.wind_burst=rafales.contents[0]
+	###########################	
 
 
     ##################################
@@ -161,6 +168,7 @@ class WeatherForecast(object):
 	rafales = line.contents[4]
 	self.wind_burst=rafales.contents[0]
 	###########################	
+        
 
 #####################################
         
@@ -198,8 +206,12 @@ class WeatherForecast(object):
         else:
             classline="period"
             t_a = unicode.strip(self.t_day)
-            t_b = unicode.strip(self.t_felt)
-            t_sep = u' ~ '
+            if self.t_felt is None:
+                t_b = u''
+                t_sep = u''
+            else:
+                t_b = unicode.strip(self.t_felt)
+                t_sep = u' ~ '
 
 	weatherImg = self.weather_img.replace("CARTE/40","SITE/30")
 	weatherImg = weatherImg.replace("SITE/40","SITE/30")
