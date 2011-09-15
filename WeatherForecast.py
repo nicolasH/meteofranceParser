@@ -120,12 +120,7 @@ class WeatherForecast(object):
         ###############################
 	weather = line.contents[2]
         self.forecast_name = line.contents[1].contents[0]
-        
-        #a_tag = str(line.contents[1].contents[0])
-        #a_tag = re.search('\>([\w]+)\<',a_tag).group(1)
-        #self.forecast_name = a_tag
-
-	###########################
+       	###########################
 	self.t_day = weather.contents[1]
 	self.weather = weather.img['alt']
 	self.weather_img = weather.img['src']
@@ -152,7 +147,6 @@ class WeatherForecast(object):
         a_tag = str(line.contents[1].contents[0])
         a_tag = re.search('\>([\w]+)\<',a_tag).group(1)
         self.forecast_name = a_tag
-
 	###########################
 	self.t_min = weather.contents[1].split('/')[0]
 	self.t_max = weather.contents[1].split('/')[1]
